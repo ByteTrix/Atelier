@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Source shared utilities from the cloned repository.
-source ~/.local/share/atelier/lib/utils.sh
+
+# Define the installation directory.
+INSTALL_DIR="${HOME}/.local/share/atelier"
+
+# Source shared utilities.
+source "${INSTALL_DIR}/lib/utils.sh"
 
 # Ensure the script is run with sudo.
 if [[ $EUID -ne 0 ]]; then
@@ -11,9 +15,10 @@ fi
 
 log_info "Starting Atelier installer..."
 
-# Ensure Gum is installed for modern interactive menus.
+# Check if Gum is installed; if not, install it.
 if ! command -v gum &>/dev/null; then
-  bash modules/cli/install-gum.sh
+  log_info "Gum is not installed. Installing Gum..."
+  bash "${INSTALL_DIR}/modules/cli/install-gum.sh"
 fi
 
 # Use Gum to select installation mode.
@@ -24,63 +29,63 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   log_info "Running Automatic Installation..."
   
   # Run common scripts with default settings.
-  bash system-update.sh
-  bash essential-tools.sh
-  bash flatpak-setup.sh
+  bash "${INSTALL_DIR}/system-update.sh"
+  bash "${INSTALL_DIR}/essential-tools.sh"
+  bash "${INSTALL_DIR}/flatpak-setup.sh"
   
   # Install default language runtimes.
-  bash modules/languages/install-python.sh
-  bash modules/languages/install-node.sh
+  bash "${INSTALL_DIR}/modules/languages/install-python.sh"
+  bash "${INSTALL_DIR}/modules/languages/install-node.sh"
   
   # Install default IDE (Visual Studio Code).
-  bash modules/ides/install-vscode.sh
+  bash "${INSTALL_DIR}/modules/ides/install-vscode.sh"
   
   # Install default browsers.
-  bash modules/browsers/install-chrome.sh
-  bash modules/browsers/install-brave.sh
+  bash "${INSTALL_DIR}/modules/browsers/install-chrome.sh"
+  bash "${INSTALL_DIR}/modules/browsers/install-brave.sh"
   
   # Install selected productivity/collaboration apps.
-  bash modules/apps/install-notion.sh
-  bash modules/apps/install-obsidian.sh
-  bash modules/apps/install-vlc.sh
-  bash modules/apps/install-xournal.sh
-  bash modules/apps/install-localsend.sh
-  bash modules/apps/install-whatsapp.sh
-  bash modules/apps/install-spotify.sh
-  bash modules/apps/install-dropbox.sh
-  bash modules/apps/install-todoist.sh
-  bash modules/apps/install-telegram.sh
-  bash modules/apps/install-ulauncher.sh
-  bash modules/apps/install-syncthing.sh
+  bash "${INSTALL_DIR}/modules/apps/install-notion.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-obsidian.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-vlc.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-xournal.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-localsend.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-whatsapp.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-spotify.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-dropbox.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-todoist.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-telegram.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-ulauncher.sh"
+  bash "${INSTALL_DIR}/modules/apps/install-syncthing.sh"
   
   # Install Docker from the containers module.
-  bash modules/containers/install-docker.sh
+  bash "${INSTALL_DIR}/modules/containers/install-docker.sh"
   
   # Setup dotfiles and configure GNOME theme.
-  bash modules/config/setup-dotfiles.sh
-  bash modules/theme/install-gnome-theme.sh
+  bash "${INSTALL_DIR}/modules/config/setup-dotfiles.sh"
+  bash "${INSTALL_DIR}/modules/theme/install-gnome-theme.sh"
   
-  bash system-cleanup.sh
+  bash "${INSTALL_DIR}/system-cleanup.sh"
 
 elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   log_info "Running Advanced Installation..."
   
   # Run the basic common tasks.
-  bash system-update.sh
-  bash essential-tools.sh
-  bash flatpak-setup.sh
+  bash "${INSTALL_DIR}/system-update.sh"
+  bash "${INSTALL_DIR}/essential-tools.sh"
+  bash "${INSTALL_DIR}/flatpak-setup.sh"
   
-  # Launch interactive menus for each module category.
+  # For each module category, launch its interactive menu (using Gum).
   for category in languages cli containers ides browsers apps mobile config theme; do
-    if [ -f "./modules/${category}/menu.sh" ]; then
+    if [ -f "${INSTALL_DIR}/modules/${category}/menu.sh" ]; then
       log_info "Launching ${category} menu..."
-      bash "./modules/${category}/menu.sh"
+      bash "${INSTALL_DIR}/modules/${category}/menu.sh"
     else
       log_warn "No interactive menu found for ${category}; skipping."
     fi
   done
   
-  bash system-cleanup.sh
+  bash "${INSTALL_DIR}/system-cleanup.sh"
 
 else
   log_error "Invalid mode selected. Exiting."
