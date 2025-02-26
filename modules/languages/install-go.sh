@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/modules/lib/utils.sh
 
 log_info "[languages] Installing Golang..."
 apt install -y golang

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "[ides] Installing IntelliJ IDEA Community Edition via Snap..."
 if ! snap list | grep -q intellij-idea-community; then

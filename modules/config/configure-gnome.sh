@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "[config] Applying GNOME desktop settings..."
 if command -v gsettings &>/dev/null; then

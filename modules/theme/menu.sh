@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "[theme/menu] Launching GNOME theme installation menu using Gum..."
 

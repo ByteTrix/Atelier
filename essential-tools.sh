@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ./lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "Checking Ubuntu version..."
 REQUIRED_VERSION="24.04"

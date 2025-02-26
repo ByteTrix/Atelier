@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "[apps] Setting up WhatsApp..."
 # For WhatsApp, you can create a desktop shortcut for WhatsApp Web

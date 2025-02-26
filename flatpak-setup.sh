@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ./lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "Setting up Flatpak and adding Flathub repository..."
 apt install -y flatpak gnome-software-plugin-flatpak

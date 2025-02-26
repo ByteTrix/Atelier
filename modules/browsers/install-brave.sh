@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 log_info "[browsers] Installing Brave Browser..."
 if ! command -v brave-browser &>/dev/null; then

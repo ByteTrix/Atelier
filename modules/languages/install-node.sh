@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/modules/lib/utils.sh
 
 log_info "[languages] Installing Node.js and npm..."
 curl -fsSL https://deb.nodesource.com/setup_18.x | bash -

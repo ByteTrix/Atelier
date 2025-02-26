@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ../../lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 if ! command -v rustup &>/dev/null; then
   log_info "[languages] Installing Rust..."

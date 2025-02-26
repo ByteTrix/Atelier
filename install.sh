@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ./lib/utils.sh
+source ~/.local/share/atelier/lib/utils.sh
 
 # Ensure the script is run with sudo.
 if [[ $EUID -ne 0 ]]; then
