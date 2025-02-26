@@ -29,9 +29,9 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   log_info "Running Automatic Installation..."
   
   # Run common scripts with default settings.
-  bash "${INSTALL_DIR}/system-update.sh"
-  bash "${INSTALL_DIR}/essential-tools.sh"
-  bash "${INSTALL_DIR}/flatpak-setup.sh"
+  # bash "${INSTALL_DIR}/system-update.sh"
+  # bash "${INSTALL_DIR}/essential-tools.sh"
+  # bash "${INSTALL_DIR}/flatpak-setup.sh"
   
   # Install default language runtimes.
   bash "${INSTALL_DIR}/modules/languages/install-python.sh"
@@ -71,9 +71,9 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   log_info "Running Advanced Installation..."
   
   # Run the basic common tasks.
-  bash "${INSTALL_DIR}/system-update.sh"
-  bash "${INSTALL_DIR}/essential-tools.sh"
-  bash "${INSTALL_DIR}/flatpak-setup.sh"
+  # bash "${INSTALL_DIR}/system-update.sh"
+  # bash "${INSTALL_DIR}/essential-tools.sh"
+  # bash "${INSTALL_DIR}/flatpak-setup.sh"
   
   # For each module category, launch its interactive menu (using Gum).
   for category in languages cli containers ides browsers apps mobile config theme; do
