@@ -2,13 +2,7 @@
 set -euo pipefail
 source ~/.local/share/atelier/lib/utils.sh
 
-log_info "Checking Ubuntu version..."
-REQUIRED_VERSION="24.04"
-current_version=$(lsb_release -rs)
-
-if [[ "$current_version" < "$REQUIRED_VERSION" ]]; then
-  log_error "Ubuntu $REQUIRED_VERSION or higher is required. Current version: $current_version."
-  exit 1
-fi
-
-log_info "Ubuntu version $current_version is supported."
+log_info "Installing essential system tools..."
+apt update
+apt install -y git curl wget zsh vim neovim htop tmux build-essential software-properties-common unzip xclip jq gnome-tweak-tool gnome-sushi
+log_info "Essential system tools installed."
