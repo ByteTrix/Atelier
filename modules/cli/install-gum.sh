@@ -10,7 +10,7 @@ source "${INSTALL_DIR}/lib/utils.sh"
 log_info "[cli/install-gum] Checking for curl..."
 if ! command -v curl &>/dev/null; then
   log_info "[cli/install-gum] curl is not installed. Installing curl..."
-  apt update && apt install -y curl
+  sudo apt update && apt install -y curl
 fi
 
 cd /tmp
