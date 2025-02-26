@@ -70,15 +70,15 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   log_info "Running Advanced Installation..."
   
   # Run the basic common tasks.
-  bash "${INSTALL_DIR}/system-update.sh"
-  bash "${INSTALL_DIR}/essential-tools.sh"
-  bash "${INSTALL_DIR}/flatpak-setup.sh"
+  # bash "${INSTALL_DIR}/system-update.sh"
+  # bash "${INSTALL_DIR}/essential-tools.sh"
+  # bash "${INSTALL_DIR}/flatpak-setup.sh"
   
-  # Create a temporary file to collect all selected script paths.
+  # Create a temporary file to collect selected script paths.
   SELECTED_SCRIPTS_FILE="/tmp/atelier_selected_scripts.txt"
-  true > "$SELECTED_SCRIPTS_FILE"
+  > "$SELECTED_SCRIPTS_FILE"
   
-  # For each module category, launch its interactive menu (which uses Gum) and append selected script paths.
+  # For each module category, launch its interactive menu and append selected script paths.
   for category in languages cli containers ides browsers apps mobile config theme; do
     MENU_SCRIPT="${INSTALL_DIR}/modules/${category}/menu.sh"
     if [ -f "$MENU_SCRIPT" ]; then
