@@ -7,5 +7,5 @@ source "$DIR/../../lib/utils.sh"
 
 log_info "[languages] Installing Node.js and npm..."
 curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-apt install -y nodejs
+sudo apt install -y nodejs
 log_info "[languages] Node.js installation complete."

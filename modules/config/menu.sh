@@ -7,9 +7,8 @@ source "$DIR/../../lib/utils.sh"
 log_info "[config/menu] Launching system configuration menu using Gum..."
 
 declare -A options=(
-  ["Setup Dotfiles"]="setup-dotfiles.sh"
+  ["Setup Dotfiles (Beta)"]="setup-dotfiles.sh"
   ["Configure VS Code Keyring"]="configure-vscode-keyring.sh"
-  ["Configure GNOME Settings"]="configure-gnome.sh"
 )
 
 descriptions=("${!options[@]}")

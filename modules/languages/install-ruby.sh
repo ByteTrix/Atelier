@@ -6,6 +6,6 @@ DIR="$(dirname "$(realpath "$0")")"
 source "$DIR/../../lib/utils.sh"
 
 log_info "[languages] Installing Ruby and Bundler..."
-apt install -y ruby-full
+sudo apt install -y ruby-full
 gem install bundler
 log_info "[languages] Ruby installation complete."

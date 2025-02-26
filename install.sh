@@ -69,8 +69,6 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   bash "${INSTALL_DIR}/modules/apps/install-localsend.sh"
   bash "${INSTALL_DIR}/modules/apps/install-whatsapp.sh"
   bash "${INSTALL_DIR}/modules/apps/install-spotify.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-dropbox.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-todoist.sh"
   bash "${INSTALL_DIR}/modules/apps/install-telegram.sh"
   bash "${INSTALL_DIR}/modules/apps/install-ulauncher.sh"
   bash "${INSTALL_DIR}/modules/apps/install-syncthing.sh"

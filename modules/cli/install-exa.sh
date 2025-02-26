@@ -2,6 +2,6 @@
 set -euo pipefail
 source ~/.local/share/atelier/lib/utils.sh
 
-log_info "[cli] Installing exa..."
-sudo apt install -y exa
-log_info "[cli] exa installed."
+log_info "[cli] Installing eza (exa)..."
+sudo apt install -y eza
+log_info "[cli] eza installed."

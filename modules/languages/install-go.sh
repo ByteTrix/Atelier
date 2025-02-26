@@ -6,5 +6,5 @@ DIR="$(dirname "$(realpath "$0")")"
 source "$DIR/../../lib/utils.sh"
 
 log_info "[languages] Installing Golang..."
-apt install -y golang
+sudo apt install -y golang
 log_info "[languages] Golang installation complete."
