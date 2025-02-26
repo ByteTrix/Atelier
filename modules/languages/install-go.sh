@@ -1,2 +1,7 @@
-#!/bin/bash
-# install-go.sh
+#!/usr/bin/env bash
+set -euo pipefail
+source ../../lib/utils.sh
+
+log_info "[languages] Installing Golang..."
+apt install -y golang
+log_info "[languages] Golang installation complete."
