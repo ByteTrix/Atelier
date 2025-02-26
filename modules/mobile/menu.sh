@@ -4,8 +4,6 @@ set -euo pipefail
 DIR="$(dirname "$(realpath "$0")")"
 source "$DIR/../../lib/utils.sh"
 
-log_info "[mobile/menu] Launching mobile development tools menu using Gum..."
-
 declare -A options=(
   ["Android Studio"]="install-android-studio.sh"
   ["Flutter SDK"]="install-flutter.sh"

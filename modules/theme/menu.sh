@@ -1,28 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Determine the directory of this script.
 DIR="$(dirname "$(realpath "$0")")"
+# Source shared utilities from the repository root.
 source "$DIR/../../lib/utils.sh"
 
-log_info "[theme/menu] Launching GNOME theme installation menu using Gum..."
+# Use Gum to prompt the user for a Yes/No choice.
+selected=$(gum choose --header "Do you want to install a GNOME theme?" "Yes" "No")
 
-declare -A options=(
-  ["Tokyo Night"]="install-gnome-theme.sh"  # You could add more options in your theme installer script.
-)
-
-descriptions=("${!options[@]}")
-
-selected=$(gum choose --no-limit --header "GNOME Themes" \
-  --header "Select a GNOME theme to install:" "${descriptions[@]}")
-
-if [ -z "$selected" ]; then
-  log_warn "[theme/menu] No theme selected; skipping."
-  exit 0
+if [[ "$selected" == "Yes" ]]; then
+  log_info "[theme/menu] User selected to install a GNOME theme."
+  # Output the full path of the GNOME theme installation script.
+  echo "$DIR/install-gnome-theme.sh"
+else
+  log_info "[theme/menu] User selected not to install a GNOME theme."
 fi
 
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[theme/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
-log_info "[theme/menu] GNOME theme installation complete."
+log_info "[theme/menu] GNOME theme installation menu complete."

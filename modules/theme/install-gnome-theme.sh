@@ -1,28 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Source shared utilities from the repository.
 source ~/.local/share/atelier/lib/utils.sh
 
-echo "============================================"
-echo "         GNOME Theme Installer"
-echo "============================================"
-echo ""
-echo "Select a theme to install:"
-echo "  1) Tokyo Night"
-echo "  2) Catppuccin"
-echo "  3) Nord"
-echo ""
-read -rp "Enter your choice (1-3): " theme_choice
+log_info "[theme] Launching GNOME Theme Installer using Gum..."
+
+# Use Gum to present theme options.
+theme_choice=$(gum choose "Tokyo Night" "Catppuccin" "Nord" --header "Select a GNOME theme to install:")
 
 case "$theme_choice" in
-  1)
+  "Tokyo Night")
     THEME_NAME="TokyoNight"
     REPO_URL="https://github.com/EliverLara/TokyoNight-GTK.git"
     ;;
-  2)
+  "Catppuccin")
     THEME_NAME="Catppuccin"
     REPO_URL="https://github.com/catppuccin/gtk.git"
     ;;
-  3)
+  "Nord")
     THEME_NAME="Nord"
     REPO_URL="https://github.com/arcticicestudio/nord-gtk-theme.git"
     ;;
@@ -39,8 +34,8 @@ if [ ! -d "${THEME_DIR}/${THEME_NAME}" ]; then
   git clone "$REPO_URL" "${THEME_DIR}/${THEME_NAME}"
 else
   log_warn "[theme] $THEME_NAME theme is already installed."
-  read -rp "Do you want to update it? (y/n): " update_choice
-  if [[ "$update_choice" =~ ^[Yy]$ ]]; then
+  update_choice=$(gum choose "Yes" "No" --header "Do you want to update it?")
+  if [[ "$update_choice" == "Yes" ]]; then
     cd "${THEME_DIR}/${THEME_NAME}" && git pull && cd - >/dev/null
   fi
 fi
