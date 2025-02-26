@@ -9,5 +9,4 @@ Atelier is an opinionated Ubuntu developer setup tool that automates the install
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/ByteTrix/Atelier.git
-   cd Atelier
+   wget -qO- https://raw.githubusercontent.com/ByteTrix/Atelier/main/boot.sh | sudo bash
