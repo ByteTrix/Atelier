@@ -1,11 +1,7 @@
-#!/usr/bin/env bash
-set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
-
-if ! command -v gum &>/dev/null; then
-  log_info "[cli] Installing Gum..."
-  apt update && apt install -y wget gnupg2 && \
-  wget -qO- https://raw.githubusercontent.com/charmbracelet/gum/main/install.sh | bash
-else
-  log_info "[cli] Gum is already installed."
-fi
+# Gum is used for the Omakub commands for tailoring Omakub after the initial install
+cd /tmp
+GUM_VERSION="0.14.3" # Use known good version
+wget -qO gum.deb "https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/gum_${GUM_VERSION}_amd64.deb"
+sudo apt-get install -y ./gum.deb
+rm gum.deb
+cd -

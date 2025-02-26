@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Source shared utilities from the cloned repository.
 source ~/.local/share/atelier/lib/utils.sh
 
 # Ensure the script is run with sudo.
@@ -12,9 +13,7 @@ log_info "Starting Atelier installer..."
 
 # Ensure Gum is installed for modern interactive menus.
 if ! command -v gum &>/dev/null; then
-  log_info "Gum is not installed. Installing Gum..."
-  apt update && apt install -y wget gnupg2
-  wget -qO- https://raw.githubusercontent.com/charmbracelet/gum/main/install.sh | bash
+  bash modules/cli/install-gum.sh
 fi
 
 # Use Gum to select installation mode.
@@ -29,7 +28,7 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   bash essential-tools.sh
   bash flatpak-setup.sh
   
-  # Install common language runtimes.
+  # Install default language runtimes.
   bash modules/languages/install-python.sh
   bash modules/languages/install-node.sh
   
@@ -71,7 +70,7 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   bash essential-tools.sh
   bash flatpak-setup.sh
   
-  # For each module category, launch its interactive menu (which uses Gum).
+  # Launch interactive menus for each module category.
   for category in languages cli containers ides browsers apps mobile config theme; do
     if [ -f "./modules/${category}/menu.sh" ]; then
       log_info "Launching ${category} menu..."
@@ -87,4 +86,5 @@ else
   log_error "Invalid mode selected. Exiting."
   exit 1
 fi
+
 log_info "Atelier installation complete! Please log out and log back in (or reboot) for all changes to take effect."
