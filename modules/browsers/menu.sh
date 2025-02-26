@@ -14,7 +14,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "Web Browsers" \
+selected=$(gum choose --no-limit --header "Web Browsers" \
   --header "Select web browsers to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

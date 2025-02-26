@@ -14,7 +14,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "System Configuration" \
+selected=$(gum choose --no-limit --header "System Configuration" \
   --header "Select configuration tasks to perform:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

@@ -23,7 +23,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "CLI Tools" \
+selected=$(gum choose --no-limit --header "CLI Tools" \
   --header "Select CLI tools to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

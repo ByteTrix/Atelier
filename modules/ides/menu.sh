@@ -15,7 +15,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "IDEs & Editors" \
+selected=$(gum choose --no-limit --header "IDEs & Editors" \
   --header "Select IDEs to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

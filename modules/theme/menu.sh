@@ -12,7 +12,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "GNOME Themes" \
+selected=$(gum choose --no-limit --header "GNOME Themes" \
   --header "Select a GNOME theme to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

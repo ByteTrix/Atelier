@@ -14,7 +14,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "Container Tools" \
+selected=$(gum choose --no-limit --header "Container Tools" \
   --header "Select container tools to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

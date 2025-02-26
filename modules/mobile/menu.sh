@@ -13,7 +13,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "Mobile Tools" \
+selected=$(gum choose --no-limit --header "Mobile Tools" \
   --header "Select mobile development tools to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then

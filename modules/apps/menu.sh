@@ -23,7 +23,7 @@ declare -A options=(
 
 descriptions=("${!options[@]}")
 
-selected=$(gum choose --no-limit --title "Productivity & Collaboration Apps" \
+selected=$(gum choose --no-limit --header "Productivity & Collaboration Apps" \
   --header "Select apps to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
