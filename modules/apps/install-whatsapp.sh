@@ -1,8 +1,13 @@
-#!/usr/bin/env bash
-set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
-
-log_info "[apps] Setting up WhatsApp..."
-# For WhatsApp, you can create a desktop shortcut for WhatsApp Web
-# or use a snap package if available.
-snap install whatsapp-for-linux || { log_warn "[apps] WhatsApp installation failed; please install manually."; }
+cat <<EOF >~/.local/share/atelier/modules/apps/WhatsApp.desktop
+[Desktop Entry]
+Version=1.0
+Name=WhatsApp
+Comment=WhatsApp Messenger
+Exec=google-chrome --app="https://web.whatsapp.com" --name=WhatsApp --class=Whatsapp
+Terminal=false
+Type=Application
+Icon=/home/\$USER/.local/share/atelier/apps/icons/WhatsApp.png
+Categories=GTK;
+MimeType=text/html;text/xml;application/xhtml+xml;
+StartupNotify=true
+EOF
