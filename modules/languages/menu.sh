@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/atelier/modules/lib/utils.sh
+# Determine the directory of the current script.
+DIR="$(dirname "$(realpath "$0")")"
+# Source the shared utilities file from the repository root.
+source "$DIR/../../lib/utils.sh"
 
 log_info "[languages/menu] Launching language installation menu using Gum..."
 
@@ -12,9 +15,8 @@ options=(
   "install-rust.sh"   "Rust (via rustup)"
 )
 
-selected=$(gum checkbox --title "Language Modules" \
+selected=$(gum choose --no-limit "Language Modules" \
   --header "Select language installers to run:" \
-  --separator "\n" \
   "${options[@]}")
 
 if [ -z "$selected" ]; then
