@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source ./lib/utils.sh
+
+# Check if running as root.
+if [[ $EUID -ne 0 ]]; then
+  log_error "Please run this script with sudo."
+  exit 1
+fi
+
+log_info "Starting Atelier installer..."
+
+# Use Gum for mode selection.
+if ! command -v gum &>/dev/null; then
+  log_info "Installing Gum..."
+  apt update && apt install -y wget gnupg2 && \
+  wget -qO- https://raw.githubusercontent.com/charmbracelet/gum/main/install.sh | bash
+fi
+
+mode=$(gum choose "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+log_info "Selected mode: $mode"
+
+if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
+  log_info "Running Automatic Installation..."
+  bash system-update.sh
+  bash essential-tools.sh
+  bash flatpak-setup.sh
+  bash modules/languages/install-python.sh
+  bash modules/languages/install-node.sh
+  bash modules/ides/install-vscode.sh
+  bash modules/browsers/install-chrome.sh
+  bash modules/browsers/install-brave.sh
+  bash modules/apps/install-notion.sh
+  bash modules/apps/install-obsidian.sh
+  bash modules/apps/install-vlc.sh
+  bash modules/apps/install-xournal.sh
+  bash modules/apps/install-localsend.sh
+  bash modules/apps/install-whatsapp.sh
+  bash modules/apps/install-spotify.sh
+  bash modules/apps/install-dropbox.sh
+  bash modules/apps/install-todoist.sh
+  bash modules/apps/install-telegram.sh
+  bash modules/apps/install-ulauncher.sh
+  bash modules/apps/install-syncthing.sh
+  bash modules/containers/install-docker.sh
+  bash modules/config/setup-dotfiles.sh
+  bash modules/theme/install-gnome-theme.sh
+  bash system-cleanup.sh
+
+elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
+  log_info "Running Advanced Installation..."
+  bash system-update.sh
+  bash essential-tools.sh
+  bash flatpak-setup.sh
+
+  # Launch interactive menus for each module category.
+  for category in languages cli containers ides browsers apps mobile config theme; do
+    if [ -f "./modules/${category}/menu.sh" ]; then
+      log_info "Launching ${category} menu..."
+      bash "./modules/${category}/menu.sh"
+    else
+      log_warn "No interactive menu for ${category}; skipping."
+    fi
+  done
+  bash system-cleanup.sh
+fi
+
+log_info "Atelier installation complete! Please log out and log back in (or reboot) for all changes to take effect."
