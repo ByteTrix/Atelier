@@ -46,8 +46,6 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   log_info "Running Automatic Installation..."
 
   # Run common scripts with default settings.
-  bash "${INSTALL_DIR}/system-update.sh"
-  bash "${INSTALL_DIR}/essential-tools.sh"
   bash "${INSTALL_DIR}/flatpak-setup.sh"
 
   # Install default language runtimes.
