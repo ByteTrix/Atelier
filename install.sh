@@ -68,7 +68,7 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
 
 elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   log_info "Running Advanced Installation..."
-  
+    
   # Run the basic common tasks.
   # bash "${INSTALL_DIR}/system-update.sh"
   # bash "${INSTALL_DIR}/essential-tools.sh"

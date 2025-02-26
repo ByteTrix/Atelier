@@ -2,11 +2,11 @@
 set -euo pipefail
 
 log_info() {
-  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1"
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2
 }
 
 log_warn() {
-  echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') - $1"
+  echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2
 }
 
 log_error() {
