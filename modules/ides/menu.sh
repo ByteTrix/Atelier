@@ -1,29 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
 
-log_info "[ides/menu] Launching IDEs menu using Gum..."
+DIR="$(dirname "$(realpath "$0")")"
+source "$DIR/../../lib/utils.sh"
 
-options=(
-  "install-vscode.sh"    "Visual Studio Code"
-  "install-intellij.sh"  "IntelliJ IDEA CE"
-  "install-emacs.sh"     "GNU Emacs"
-  "install-geany.sh"     "Geany IDE"
+log_info "[ides/menu] Launching IDEs installation menu using Gum..."
+
+declare -A options=(
+  ["Visual Studio Code"]="install-vscode.sh"
+  ["IntelliJ IDEA CE"]="install-intellij.sh"
+  ["GNU Emacs"]="install-emacs.sh"
+  ["Geany IDE"]="install-geany.sh"
 )
 
-selected=$(gum checkbox --title "IDEs & Editors" \
-  --header "Select IDEs to install:" \
-  --separator "\n" \
-  "${options[@]}")
+descriptions=("${!options[@]}")
+
+selected=$(gum choose --no-limit --title "IDEs & Editors" \
+  --header "Select IDEs to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
   log_warn "[ides/menu] No IDEs selected; skipping."
   exit 0
 fi
 
-while IFS= read -r script; do
-  log_info "[ides/menu] Executing $script..."
-  bash "$script"
+while IFS= read -r desc; do
+  script="${options[$desc]}"
+  log_info "[ides/menu] Executing $script for '$desc'..."
+  bash "$DIR/$script"
 done <<< "$selected"
 
-log_info "[ides/menu] IDEs installation complete."
+log_info "[ides/menu] IDE installation complete."

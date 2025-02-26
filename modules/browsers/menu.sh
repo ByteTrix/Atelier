@@ -1,28 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
 
-log_info "[browsers/menu] Launching browsers menu using Gum..."
+DIR="$(dirname "$(realpath "$0")")"
+source "$DIR/../../lib/utils.sh"
 
-options=(
-  "install-chrome.sh"   "Google Chrome"
-  "install-firefox.sh"  "Firefox"
-  "install-brave.sh"    "Brave Browser"
+log_info "[browsers/menu] Launching browsers installation menu using Gum..."
+
+declare -A options=(
+  ["Google Chrome"]="install-chrome.sh"
+  ["Firefox"]="install-firefox.sh"
+  ["Brave Browser"]="install-brave.sh"
 )
 
-selected=$(gum checkbox --title "Web Browsers" \
-  --header "Select web browsers to install:" \
-  --separator "\n" \
-  "${options[@]}")
+descriptions=("${!options[@]}")
+
+selected=$(gum choose --no-limit --title "Web Browsers" \
+  --header "Select web browsers to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
   log_warn "[browsers/menu] No browsers selected; skipping."
   exit 0
 fi
 
-while IFS= read -r script; do
-  log_info "[browsers/menu] Executing $script..."
-  bash "$script"
+while IFS= read -r desc; do
+  script="${options[$desc]}"
+  log_info "[browsers/menu] Executing $script for '$desc'..."
+  bash "$DIR/$script"
 done <<< "$selected"
 
 log_info "[browsers/menu] Browser installation complete."

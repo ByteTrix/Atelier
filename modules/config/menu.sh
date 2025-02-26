@@ -1,28 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
 
-log_info "[config/menu] Launching configuration menu using Gum..."
+DIR="$(dirname "$(realpath "$0")")"
+source "$DIR/../../lib/utils.sh"
 
-options=(
-  "setup-dotfiles.sh"             "Setup dotfiles"
-  "configure-vscode-keyring.sh"     "Configure VS Code keyring"
-  "configure-gnome.sh"            "Configure GNOME settings"
+log_info "[config/menu] Launching system configuration menu using Gum..."
+
+declare -A options=(
+  ["Setup Dotfiles"]="setup-dotfiles.sh"
+  ["Configure VS Code Keyring"]="configure-vscode-keyring.sh"
+  ["Configure GNOME Settings"]="configure-gnome.sh"
 )
 
-selected=$(gum checkbox --title "System Configuration" \
-  --header "Select configuration tasks to perform:" \
-  --separator "\n" \
-  "${options[@]}")
+descriptions=("${!options[@]}")
+
+selected=$(gum choose --no-limit --title "System Configuration" \
+  --header "Select configuration tasks to perform:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
   log_warn "[config/menu] No configuration tasks selected; skipping."
   exit 0
 fi
 
-while IFS= read -r script; do
-  log_info "[config/menu] Executing $script..."
-  bash "$script"
+while IFS= read -r desc; do
+  script="${options[$desc]}"
+  log_info "[config/menu] Executing $script for '$desc'..."
+  bash "$DIR/$script"
 done <<< "$selected"
 
 log_info "[config/menu] Configuration tasks complete."

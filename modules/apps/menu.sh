@@ -1,37 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
+
+DIR="$(dirname "$(realpath "$0")")"
+source "$DIR/../../lib/utils.sh"
 
 log_info "[apps/menu] Launching productivity apps menu using Gum..."
 
-options=(
-  "install-notion.sh"      "Notion"
-  "install-obsidian.sh"    "Obsidian"
-  "install-vlc.sh"         "VLC Media Player"
-  "install-xournal.sh"     "Xournal++"
-  "install-localsend.sh"   "Localsend"
-  "install-whatsapp.sh"    "WhatsApp"
-  "install-spotify.sh"     "Spotify"
-  "install-dropbox.sh"     "Dropbox"
-  "install-todoist.sh"     "Todoist"
-  "install-telegram.sh"    "Telegram"
-  "install-ulauncher.sh"   "Ulauncher"
-  "install-syncthing.sh"   "Syncthing"
+declare -A options=(
+  ["Notion"]="install-notion.sh"
+  ["Obsidian"]="install-obsidian.sh"
+  ["VLC Media Player"]="install-vlc.sh"
+  ["Xournal++"]="install-xournal.sh"
+  ["Localsend"]="install-localsend.sh"
+  ["WhatsApp"]="install-whatsapp.sh"
+  ["Spotify"]="install-spotify.sh"
+  ["Dropbox"]="install-dropbox.sh"
+  ["Todoist"]="install-todoist.sh"
+  ["Telegram"]="install-telegram.sh"
+  ["Ulauncher"]="install-ulauncher.sh"
+  ["Syncthing"]="install-syncthing.sh"
 )
 
-selected=$(gum checkbox --title "Productivity & Collaboration Apps" \
-  --header "Select apps to install:" \
-  --separator "\n" \
-  "${options[@]}")
+descriptions=("${!options[@]}")
+
+selected=$(gum choose --no-limit --title "Productivity & Collaboration Apps" \
+  --header "Select apps to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
   log_warn "[apps/menu] No apps selected; skipping."
   exit 0
 fi
 
-while IFS= read -r script; do
-  log_info "[apps/menu] Executing $script..."
-  bash "$script"
+while IFS= read -r desc; do
+  script="${options[$desc]}"
+  log_info "[apps/menu] Executing $script for '$desc'..."
+  bash "$DIR/$script"
 done <<< "$selected"
 
 log_info "[apps/menu] Apps installation complete."

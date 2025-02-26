@@ -1,26 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/atelier/lib/utils.sh
+
+DIR="$(dirname "$(realpath "$0")")"
+source "$DIR/../../lib/utils.sh"
 
 log_info "[theme/menu] Launching GNOME theme installation menu using Gum..."
 
-options=(
-  "install-gnome-theme.sh" "Select a GNOME theme to install"
+declare -A options=(
+  ["Tokyo Night"]="install-gnome-theme.sh"  # You could add more options in your theme installer script.
 )
 
-selected=$(gum checkbox --title "GNOME Themes" \
-  --header "Select a theme option:" \
-  --separator "\n" \
-  "${options[@]}")
+descriptions=("${!options[@]}")
+
+selected=$(gum choose --no-limit --title "GNOME Themes" \
+  --header "Select a GNOME theme to install:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
   log_warn "[theme/menu] No theme selected; skipping."
   exit 0
 fi
 
-while IFS= read -r script; do
-  log_info "[theme/menu] Executing $script..."
-  bash "$script"
+while IFS= read -r desc; do
+  script="${options[$desc]}"
+  log_info "[theme/menu] Executing $script for '$desc'..."
+  bash "$DIR/$script"
 done <<< "$selected"
 
-log_info "[theme/menu] Theme installation complete."
+log_info "[theme/menu] GNOME theme installation complete."
