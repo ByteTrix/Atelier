@@ -25,8 +25,7 @@ fi
 
 while IFS= read -r desc; do
   script="${options[$desc]}"
-  log_info "[ides/menu] Executing $script for '$desc'..."
-  bash "$DIR/$script"
+  log_info "[ides/menu] Selected: $desc -> $script"
+  echo "$DIR/$script"
 done <<< "$selected"
-
 log_info "[ides/menu] IDE installation complete."

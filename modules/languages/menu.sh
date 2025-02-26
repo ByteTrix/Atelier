@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Determine the directory of the current script.
 DIR="$(dirname "$(realpath "$0")")"
-# Source shared utilities from the repository root.
+# Source shared utilities.
 source "$DIR/../../lib/utils.sh"
 
 log_info "[languages/menu] Launching language installation menu using Gum..."
@@ -17,23 +17,20 @@ declare -A options=(
   ["Rust (via rustup)"]="install-rust.sh"
 )
 
-# Create an array of descriptions (keys of the associative array).
+# Create an array of descriptions.
 descriptions=("${!options[@]}")
 
-# Use Gum's choose command to allow multiple selections.
-selected=$(gum choose --no-limit --header "Language Modules" \
-  --header "Select language installers to run:" "${descriptions[@]}")
+# Use Gum's choose command with --no-limit and --header.
+selected=$(gum choose --no-limit --header "Select language installers to run:" "${descriptions[@]}")
 
 if [ -z "$selected" ]; then
   log_warn "[languages/menu] No selection made; skipping language installation."
   exit 0
 fi
 
-# Process each selected option.
+# For each selected description, output the full path of the corresponding script.
 while IFS= read -r desc; do
   script="${options[$desc]}"
-  log_info "[languages/menu] Executing $script for '$desc'..."
-  bash "$DIR/$script"
+  log_info "[languages/menu] Selected: $desc -> $script"
+  echo "$DIR/$script"
 done <<< "$selected"
-
-log_info "[languages/menu] Language installation complete."

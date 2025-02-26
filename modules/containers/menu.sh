@@ -24,8 +24,7 @@ fi
 
 while IFS= read -r desc; do
   script="${options[$desc]}"
-  log_info "[containers/menu] Executing $script for '$desc'..."
-  bash "$DIR/$script"
+  log_info "[containers/menu] Selected: $desc -> $script"
+  echo "$DIR/$script"
 done <<< "$selected"
-
 log_info "[containers/menu] Container tools installation complete."

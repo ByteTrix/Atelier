@@ -22,8 +22,7 @@ fi
 
 while IFS= read -r desc; do
   script="${options[$desc]}"
-  log_info "[theme/menu] Executing $script for '$desc'..."
-  bash "$DIR/$script"
+  log_info "[theme/menu] Selected: $desc -> $script"
+  echo "$DIR/$script"
 done <<< "$selected"
-
 log_info "[theme/menu] GNOME theme installation complete."
