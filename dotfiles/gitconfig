@@ -1,8 +1,0 @@
-[user]
-    name = Your Name
-    email = you@example.com
-[core]
-    editor = vim
-    excludesfile = ~/.gitignore_global
-[color]
-    ui = auto       # Enable colors
