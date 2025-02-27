@@ -1,0 +1,105 @@
+/* Main Layout */
+Screen {
+    background: #1e1e2e;
+}
+
+Header {
+    background: #313244;
+    color: #cdd6f4;
+    text-align: center;
+    padding: 1;
+}
+
+Footer {
+    background: #313244;
+    color: #cdd6f4;
+}
+
+/* Sidebar */
+#sidebar {
+    width: 30%;
+    padding: 1;
+    background: #313244;
+    border: heavy #45475a;
+    height: 100%;
+}
+
+.section-title {
+    text-style: bold;
+    color: #a6e3a1;
+    margin-bottom: 1;
+}
+
+.category-list {
+    color: #8be9fd;
+    margin: 1 0;
+}
+
+#search_input {
+    border: solid #f5e0dc;
+    padding: 0 1;
+    margin: 1 0;
+    background: #1e1e2e;
+}
+
+/* Main Content */
+#main_content {
+    width: 70%;
+    padding: 1;
+    background: #1e1e2e;
+}
+
+ListView {
+    border: round #585b70;
+    padding: 1;
+    height: 100%;
+    scrollbar-color: #45475a;
+}
+
+/* Package Item Styling */
+.package-item {
+    padding: 1;
+    margin: 0 0 1 0;
+    border: solid #45475a;
+    background: #313244;
+}
+
+.package-item:focus {
+    border: double #89b4fa;
+}
+
+.package-info {
+    margin-left: 1;
+    width: 100%;
+}
+
+.package-details {
+    margin-top: 1;
+    color: #a6adc8;
+}
+
+Checkbox {
+    background: #45475a;
+    padding: 0 1;
+}
+
+Checkbox:focus {
+    background: #89b4fa;
+}
+
+/* Details Pane */
+#details {
+    border: round #585b70;
+    padding: 1;
+    margin: 1 0 0 1;
+    background: #313244;
+    color: #cdd6f4;
+    height: 100%;
+}
+
+/* Scrollbar Styling */
+* {
+    scrollbar-background: #313244;
+    scrollbar-color: #45475a;
+    scrollbar-corner-color: #313244;
+}
