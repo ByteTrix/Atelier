@@ -58,44 +58,82 @@ ListView {
 
 /* Package Item Styling */
 .package-item {
-    padding: 1;
-    margin: 0 0 1 0;
+    padding: 0 1;
+    margin: 0 0 0 0;
     border: solid #45475a;
     background: #313244;
+    height: 3;
+    width: 100%;
+}
+
+ListView {
+    background: #1e1e2e;
+    width: 100%;
+    padding: 1;
+    border: none;
+}
+
+ListView > * {
+    margin-bottom: 0;
+    width: 100%;
 }
 
 .package-item:focus {
     border: double #89b4fa;
+    background: #1e1e2e;
 }
 
 .package-info {
     margin-left: 1;
     width: 100%;
+    height: auto;
 }
 
-.package-details {
-    margin-top: 1;
-    color: #a6adc8;
+.package-header {
+    width: 100%;
+    height: 3;
+    align: center middle;
+    padding: 0;
+}
+
+.package-header Label {
+    margin-right: 2;
+    height: 1;
 }
 
 Checkbox {
     background: #45475a;
     padding: 0 1;
+    margin-top: 1;
 }
 
 Checkbox:focus {
     background: #89b4fa;
 }
 
+Label {
+    text-align: left;
+    padding: 0;
+}
+
 /* Details Pane */
 #details {
     border: round #585b70;
-    padding: 1;
+    padding: 2;
     margin: 1 0 0 1;
     background: #313244;
     color: #cdd6f4;
     height: 100%;
+    max-width: 60;
+    overflow-x: hidden;
 }
+
+#details_container {
+    width: 35%;
+    min-width: 40;
+    max-width: 60;
+}
+
 
 /* Scrollbar Styling */
 * {

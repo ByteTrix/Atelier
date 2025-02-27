@@ -20,18 +20,10 @@ class PackageItem(ListItem):
         self.pkg_status = status
 
     def compose(self) -> ComposeResult:
-        """Create a more detailed package item with status indicators."""
+        """Create a simple text-based package item."""
         yield Horizontal(
             Checkbox(id=f"check_{self.pkg_name.lower().replace(' ', '_')}"),
-            Vertical(
-                Label(Text(self.pkg_name, style="bold")),
-                Label(Text(self.pkg_description, style="dim")),
-                Horizontal(
-                    Label(Text(f"Size: {self.pkg_size}", style="italic")),
-                    Label(Text(self.pkg_status, style="green" if self.pkg_status == "Installed" else "yellow")),
-                    classes="package-details"
-                ),
-                classes="package-info"
-            ),
+            Label(Text(f"{self.pkg_name} • {self.pkg_status} • {self.pkg_size}",
+                style="bold" if self.pkg_status == "Installed" else "")),
             classes="package-item"
         )

@@ -13,38 +13,69 @@ from rich.text import Text
 from setupr.ui.widgets import PackageItem
 
 PACKAGE_CATEGORIES = {
-    "Development": [
-        "git", "python3", "nodejs", "vscode", "docker", "docker-compose",
-        "build-essential", "cmake", "golang", "openjdk-17-jdk", "maven",
-        "npm", "yarn", "rust-all", "gcc", "g++", "gdb", "make"
-    ],
-    "IDEs & Editors": [
-        "code", "sublime-text", "vim", "neovim", "emacs",
-        "pycharm-community", "intellij-idea-community", "android-studio"
-    ],
-    "Databases": [
-        "postgresql", "mysql-server", "mongodb-org", "redis-server",
-        "sqlite3", "postgresql-client", "mysql-client"
-    ],
-    "Development Tools": [
-        "curl", "wget", "htop", "tmux", "screen", "zsh",
-        "git-lfs", "jq", "postman", "wireshark"
-    ],
-    "Containers & Cloud": [
-        "docker", "docker-compose", "kubectl", "awscli",
-        "google-cloud-sdk", "azure-cli", "terraform"
-    ],
-    "Web Servers": [
-        "nginx", "apache2", "certbot"
-    ],
-    "System Tools": [
-        "htop", "neofetch", "timeshift", "gparted", "synaptic",
-        "net-tools", "openssh-server", "gnome-tweaks"
-    ],
-    "Utilities": [
-        "firefox", "chromium-browser", "telegram-desktop",
-        "spotify-client", "discord", "slack", "zoom"
-    ]
+    "Development": {
+        "packages": [
+            "git",         "python3",       "nodejs",        "vscode",
+            "docker",      "docker-compose","build-essential","cmake",
+            "golang",      "openjdk-17-jdk","maven",        "npm",
+            "yarn",        "rust-all",      "gcc",          "g++",
+            "gdb",         "make"
+        ],
+        "description": "Essential development tools and languages"
+    },
+    "IDEs & Editors": {
+        "packages": [
+            "code",       "sublime-text", "vim",        "neovim",
+            "emacs",      "pycharm-community", "intellij-idea-community",
+            "android-studio"
+        ],
+        "description": "Code editors and integrated development environments"
+    },
+    "Databases": {
+        "packages": [
+            "postgresql", "mysql-server",  "mongodb-org", "redis-server",
+            "sqlite3",    "postgresql-client", "mysql-client"
+        ],
+        "description": "Database management systems and clients"
+    },
+    "Development Tools": {
+        "packages": [
+            "curl",    "wget",    "htop",     "tmux",
+            "screen",  "zsh",     "git-lfs",  "jq",
+            "postman", "wireshark"
+        ],
+        "description": "Additional tools for development workflow"
+    },
+    "Containers & Cloud": {
+        "packages": [
+            "docker",           "docker-compose", "kubectl",
+            "awscli",          "google-cloud-sdk", "azure-cli",
+            "terraform"
+        ],
+        "description": "Container and cloud infrastructure tools"
+    },
+    "Web Servers": {
+        "packages": [
+            "nginx", "apache2", "certbot"
+        ],
+        "description": "Web servers and SSL certificate management"
+    },
+    "System Tools": {
+        "packages": [
+            "htop",           "neofetch",      "timeshift",
+            "gparted",        "synaptic",      "net-tools",
+            "openssh-server", "gnome-tweaks"
+        ],
+        "description": "System monitoring and management utilities"
+    },
+    "Utilities": {
+        "packages": [
+            "firefox",          "chromium-browser", "telegram-desktop",
+            "spotify-client",   "discord",          "slack",
+            "zoom"
+        ],
+        "description": "General purpose applications"
+    }
 }
 
 class PackagesLoaded(Message):
@@ -55,7 +86,7 @@ class PackagesLoaded(Message):
 
 class SetuprApp(App):
     CSS_PATH = "main.css"  # Path relative to this module's directory
-    TITLE = f"Setupr – System: {distro.name(pretty=True)}"
+    TITLE = f"Development Package Installer – {distro.name(pretty=True)}"
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True),
@@ -70,7 +101,10 @@ class SetuprApp(App):
     def __init__(self):
         super().__init__()
         self.packages: Dict[str, Dict] = {}
+        self.package_cache: Dict[str, Dict] = {}
         self.selected_category = "All"
+        self.selected_package = None
+        self.is_loading = False
 
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
@@ -102,11 +136,16 @@ class SetuprApp(App):
 
     def on_mount(self) -> None:
         """Initialize the app when mounted."""
-        # Show initial package list
+        # Show initial empty state
         self.selected_category = "All"
+        self.query_one("#details").update("Select a package to view details")
+        
+        # Initialize the package list with loading state
         self.update_package_list()
+        
         # Start loading package details in background
         self.load_packages()
+        
         # Focus the package list
         self.query_one("#package_list").focus()
 
@@ -122,22 +161,58 @@ class SetuprApp(App):
 
     @work(thread=True)
     def load_packages(self) -> None:
-        """Load package information asynchronously."""
+        """Load package information asynchronously using cache."""
         packages = {}
-        for category, package_list in PACKAGE_CATEGORIES.items():
-            for pkg_name in package_list:
-                # Check if package is installed
+        self.is_loading = True
+        
+        for category, category_data in PACKAGE_CATEGORIES.items():
+            category_desc = category_data["description"]
+            for pkg_name in category_data["packages"]:
+                # First check cache
+                if pkg_name in self.package_cache:
+                    packages[pkg_name] = self.package_cache[pkg_name]
+                    continue
+
+                # Check if package is installed first (faster operation)
                 is_installed = self._check_package_installed(pkg_name)
-                size = self._get_package_size(pkg_name)
                 
-                packages[pkg_name] = {
+                # Create initial entry with basic info
+                initial_info = {
                     "name": pkg_name,
                     "category": category,
-                    "description": self._get_package_description(pkg_name),
+                    "category_description": category_desc,
+                    "description": f"Loading details for {pkg_name}...",
+                    "installed": is_installed,
+                    "size": "Loading..."
+                }
+                
+                packages[pkg_name] = initial_info
+                self.package_cache[pkg_name] = initial_info
+                self.post_message(PackagesLoaded(packages.copy()))
+                
+                # Then load detailed info
+                size = self._get_package_size(pkg_name)
+                apt_description = self._get_package_description(pkg_name)
+                
+                # If apt_description is not available, use category description
+                description = apt_description
+                if description == "No description available":
+                    description = f"{category_desc} ({pkg_name})"
+                
+                # Update with full info
+                detailed_info = {
+                    "name": pkg_name,
+                    "category": category,
+                    "category_description": category_desc,
+                    "description": description,
                     "installed": is_installed,
                     "size": size
                 }
-        
+                
+                packages[pkg_name] = detailed_info
+                self.package_cache[pkg_name] = detailed_info
+
+        self.is_loading = False
         self.post_message(PackagesLoaded(packages))
 
     @on(PackagesLoaded)
@@ -200,17 +275,32 @@ class SetuprApp(App):
         """Update details when a package is selected."""
         item = event.item
         if isinstance(item, PackageItem):
-            pkg_info = self.packages.get(item.pkg_name, {})
-            details = [
-                f"Name: {item.pkg_name}",
-                f"Status: {item.pkg_status}",
-                f"Size: {item.pkg_size}",
-                f"Category: {pkg_info.get('category', 'Unknown')}",
-                "",
-                "Description:",
-                item.pkg_description
-            ]
-            self.query_one("#details").update("\n".join(details))
+            if self.selected_package == item.pkg_name:
+                # If clicking the same package, clear details
+                self.selected_package = None
+                self.query_one("#details").update("Select a package to view details")
+            else:
+                # Show details for newly selected package
+                self.selected_package = item.pkg_name
+                pkg_info = self.packages.get(item.pkg_name, {})
+                category = pkg_info.get('category', 'Unknown')
+                
+                if self.is_loading and pkg_info.get('description', '').startswith('Loading'):
+                    details = ["Loading package details..."]
+                else:
+                    details = [
+                        f"🔍 Package: {item.pkg_name}",
+                        f"📦 Status: {item.pkg_status}",
+                        f"💾 Size: {item.pkg_size}",
+                        f"🏷️ Category: {category}",
+                        "",
+                        "📝 Category Description:",
+                        PACKAGE_CATEGORIES.get(category, {}).get('description', 'No category description'),
+                        "",
+                        "ℹ️ Package Description:",
+                        pkg_info.get('description', 'No description available')
+                    ]
+                self.query_one("#details").update("\n".join(details))
 
     def update_package_list(self, filter_text: str = "") -> None:
         """Update the package list based on category and search filter."""
@@ -218,52 +308,48 @@ class SetuprApp(App):
         list_view.clear()
 
         # Get package list based on category
-        packages_to_show = []
+        packages_to_show = set()  # Use set for faster lookups
         if self.selected_category == "All":
             # For "All" category, combine all packages
-            for packages in PACKAGE_CATEGORIES.values():
-                packages_to_show.extend(packages)
-            # Remove duplicates while preserving order
-            packages_to_show = list(dict.fromkeys(packages_to_show))
+            for category_data in PACKAGE_CATEGORIES.values():
+                packages_to_show.update(category_data["packages"])
         else:
             # For specific category
-            packages_to_show = PACKAGE_CATEGORIES.get(self.selected_category, [])
+            category_data = PACKAGE_CATEGORIES.get(self.selected_category, {})
+            packages_to_show.update(category_data.get("packages", []))
 
         # Filter by search text if any
         if filter_text:
-            packages_to_show = [
+            filter_text = filter_text.lower()
+            packages_to_show = {
                 pkg for pkg in packages_to_show
-                if filter_text.lower() in pkg.lower()
-            ]
+                if filter_text in pkg.lower()
+            }
+
+        # Sort packages for consistent display
+        packages_to_show = sorted(packages_to_show)
 
         # Create PackageItem for each package
-        for pkg_name in sorted(packages_to_show):  # Sort for consistent order
+        for pkg_name in packages_to_show:
             pkg_info = self.packages.get(pkg_name, {})
+            is_installed = pkg_info.get("installed", False)
+            size = pkg_info.get("size", "Loading...")
             
-            if pkg_info:  # If we have package info
-                list_view.append(
-                    PackageItem(
-                        pkg_name,
-                        pkg_info.get("description", "Loading..."),
-                        pkg_info.get("size", "Unknown"),
-                        "Installed" if pkg_info.get("installed", False) else "Not Installed"
-                    )
+            list_view.append(
+                PackageItem(
+                    pkg_name,
+                    "",  # No description in list view
+                    size,
+                    "Installed" if is_installed else "Not Installed"
                 )
-            else:  # Show loading state
-                list_view.append(
-                    PackageItem(
-                        pkg_name,
-                        "Loading package information...",
-                        "Loading...",
-                        "Checking..."
-                    )
-                )
+            )
         
-        # Update window title with category
+        # Update window title
+        count = len(packages_to_show)
         if self.selected_category == "All":
-            self.sub_title = "All Packages"
+            self.sub_title = f"All Packages ({count})"
         else:
-            self.sub_title = f"Category: {self.selected_category}"
+            self.sub_title = f"{self.selected_category} ({count})"
 
     @on(Input.Changed, "#search_input")
     def on_search_changed(self, event: Input.Changed) -> None:
