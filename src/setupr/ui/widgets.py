@@ -12,9 +12,12 @@ class PackageItem(ListItem):
     pkg_size = reactive("Unknown")
     pkg_status = reactive("Not Installed")
     
-    def __init__(self, name: str, description: str = "", size: str = "Unknown", status: str = "Not Installed") -> None:
+    display_name = reactive("")
+
+    def __init__(self, pkg_name: str, name: str = "", description: str = "", size: str = "Unknown", status: str = "Not Installed") -> None:
         super().__init__()
-        self.pkg_name = name
+        self.pkg_name = pkg_name
+        self.display_name = name or pkg_name
         self.pkg_description = description
         self.pkg_size = size
         self.pkg_status = status
@@ -23,7 +26,7 @@ class PackageItem(ListItem):
         """Create a simple text-based package item."""
         yield Horizontal(
             Checkbox(id=f"check_{self.pkg_name.lower().replace(' ', '_')}"),
-            Label(Text(f"{self.pkg_name} • {self.pkg_status} • {self.pkg_size}",
+            Label(Text(self.display_name,
                 style="bold" if self.pkg_status == "Installed" else "")),
             classes="package-item"
         )

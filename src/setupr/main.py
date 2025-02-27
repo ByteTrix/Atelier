@@ -14,66 +14,111 @@ from setupr.ui.widgets import PackageItem
 
 PACKAGE_CATEGORIES = {
     "Development": {
-        "packages": [
-            "git",         "python3",       "nodejs",        "vscode",
-            "docker",      "docker-compose","build-essential","cmake",
-            "golang",      "openjdk-17-jdk","maven",        "npm",
-            "yarn",        "rust-all",      "gcc",          "g++",
-            "gdb",         "make"
-        ],
+        "packages": {
+            "git": "Git",
+            "python3": "Python",
+            "nodejs": "Node.js",
+            "vscode": "Visual Studio Code",
+            "docker": "Docker",
+            "docker-compose": "Docker Compose",
+            "build-essential": "Build Essential Tools",
+            "cmake": "CMake",
+            "golang": "Go Language",
+            "openjdk-17-jdk": "Java Development Kit 17",
+            "maven": "Apache Maven",
+            "npm": "Node Package Manager",
+            "yarn": "Yarn Package Manager",
+            "rust-all": "Rust Language",
+            "gcc": "GNU C Compiler",
+            "g++": "GNU C++ Compiler",
+            "gdb": "GNU Debugger",
+            "make": "GNU Make"
+        },
         "description": "Essential development tools and languages"
     },
     "IDEs & Editors": {
-        "packages": [
-            "code",       "sublime-text", "vim",        "neovim",
-            "emacs",      "pycharm-community", "intellij-idea-community",
-            "android-studio"
-        ],
+        "packages": {
+            "code": "Visual Studio Code",
+            "sublime-text": "Sublime Text",
+            "vim": "Vim Editor",
+            "neovim": "Neovim",
+            "emacs": "Emacs Editor",
+            "pycharm-community": "PyCharm Community",
+            "intellij-idea-community": "IntelliJ IDEA Community",
+            "android-studio": "Android Studio"
+        },
         "description": "Code editors and integrated development environments"
     },
     "Databases": {
-        "packages": [
-            "postgresql", "mysql-server",  "mongodb-org", "redis-server",
-            "sqlite3",    "postgresql-client", "mysql-client"
-        ],
+        "packages": {
+            "postgresql": "PostgreSQL",
+            "mysql-server": "MySQL Server",
+            "mongodb-org": "MongoDB",
+            "redis-server": "Redis",
+            "sqlite3": "SQLite",
+            "postgresql-client": "PostgreSQL Client",
+            "mysql-client": "MySQL Client"
+        },
         "description": "Database management systems and clients"
     },
     "Development Tools": {
-        "packages": [
-            "curl",    "wget",    "htop",     "tmux",
-            "screen",  "zsh",     "git-lfs",  "jq",
-            "postman", "wireshark"
-        ],
+        "packages": {
+            "curl": "cURL",
+            "wget": "Wget",
+            "htop": "System Monitor",
+            "tmux": "Terminal Multiplexer",
+            "screen": "Screen",
+            "zsh": "Z Shell",
+            "git-lfs": "Git Large File Storage",
+            "jq": "JSON Processor",
+            "postman": "Postman API Platform",
+            "wireshark": "Network Protocol Analyzer"
+        },
         "description": "Additional tools for development workflow"
     },
     "Containers & Cloud": {
-        "packages": [
-            "docker",           "docker-compose", "kubectl",
-            "awscli",          "google-cloud-sdk", "azure-cli",
-            "terraform"
-        ],
+        "packages": {
+            "docker": "Docker",
+            "docker-compose": "Docker Compose",
+            "kubectl": "Kubernetes CLI",
+            "awscli": "AWS CLI",
+            "google-cloud-sdk": "Google Cloud SDK",
+            "azure-cli": "Azure CLI",
+            "terraform": "Terraform"
+        },
         "description": "Container and cloud infrastructure tools"
     },
     "Web Servers": {
-        "packages": [
-            "nginx", "apache2", "certbot"
-        ],
+        "packages": {
+            "nginx": "NGINX Web Server",
+            "apache2": "Apache Web Server",
+            "certbot": "Let's Encrypt Client"
+        },
         "description": "Web servers and SSL certificate management"
     },
     "System Tools": {
-        "packages": [
-            "htop",           "neofetch",      "timeshift",
-            "gparted",        "synaptic",      "net-tools",
-            "openssh-server", "gnome-tweaks"
-        ],
+        "packages": {
+            "htop": "System Monitor",
+            "neofetch": "System Information Tool",
+            "timeshift": "System Restore Tool",
+            "gparted": "Partition Editor",
+            "synaptic": "Package Manager",
+            "net-tools": "Network Tools",
+            "openssh-server": "SSH Server",
+            "gnome-tweaks": "GNOME Customization"
+        },
         "description": "System monitoring and management utilities"
     },
     "Utilities": {
-        "packages": [
-            "firefox",          "chromium-browser", "telegram-desktop",
-            "spotify-client",   "discord",          "slack",
-            "zoom"
-        ],
+        "packages": {
+            "firefox": "Firefox Browser",
+            "chromium-browser": "Chromium Browser",
+            "telegram-desktop": "Telegram",
+            "spotify-client": "Spotify",
+            "discord": "Discord",
+            "slack": "Slack",
+            "zoom": "Zoom"
+        },
         "description": "General purpose applications"
     }
 }
@@ -167,7 +212,7 @@ class SetuprApp(App):
         
         for category, category_data in PACKAGE_CATEGORIES.items():
             category_desc = category_data["description"]
-            for pkg_name in category_data["packages"]:
+            for pkg_name, common_name in category_data["packages"].items():
                 # First check cache
                 if pkg_name in self.package_cache:
                     packages[pkg_name] = self.package_cache[pkg_name]
@@ -178,7 +223,8 @@ class SetuprApp(App):
                 
                 # Create initial entry with basic info
                 initial_info = {
-                    "name": pkg_name,
+                    "name": common_name,
+                    "pkg_name": pkg_name,
                     "category": category,
                     "category_description": category_desc,
                     "description": f"Loading details for {pkg_name}...",
@@ -201,7 +247,8 @@ class SetuprApp(App):
                 
                 # Update with full info
                 detailed_info = {
-                    "name": pkg_name,
+                    "name": common_name,
+                    "pkg_name": pkg_name,
                     "category": category,
                     "category_description": category_desc,
                     "description": description,
@@ -289,7 +336,7 @@ class SetuprApp(App):
                     details = ["Loading package details..."]
                 else:
                     details = [
-                        f"🔍 Package: {item.pkg_name}",
+                        f"🔍 Package: {pkg_info.get('name', item.pkg_name)}",
                         f"📦 Status: {item.pkg_status}",
                         f"💾 Size: {item.pkg_size}",
                         f"🏷️ Category: {category}",
@@ -312,19 +359,23 @@ class SetuprApp(App):
         if self.selected_category == "All":
             # For "All" category, combine all packages
             for category_data in PACKAGE_CATEGORIES.values():
-                packages_to_show.update(category_data["packages"])
+                packages_to_show.update(category_data["packages"].keys())
         else:
             # For specific category
             category_data = PACKAGE_CATEGORIES.get(self.selected_category, {})
-            packages_to_show.update(category_data.get("packages", []))
+            packages_to_show.update(category_data.get("packages", {}).keys())
 
         # Filter by search text if any
         if filter_text:
             filter_text = filter_text.lower()
-            packages_to_show = {
-                pkg for pkg in packages_to_show
-                if filter_text in pkg.lower()
-            }
+            filtered_packages = set()
+            for pkg_name in packages_to_show:
+                pkg_info = self.packages.get(pkg_name, {})
+                display_name = pkg_info.get("name", pkg_name)
+                if (filter_text in pkg_name.lower() or 
+                    filter_text in display_name.lower()):
+                    filtered_packages.add(pkg_name)
+            packages_to_show = filtered_packages
 
         # Sort packages for consistent display
         packages_to_show = sorted(packages_to_show)
@@ -333,14 +384,15 @@ class SetuprApp(App):
         for pkg_name in packages_to_show:
             pkg_info = self.packages.get(pkg_name, {})
             is_installed = pkg_info.get("installed", False)
-            size = pkg_info.get("size", "Loading...")
+            display_name = pkg_info.get("name", pkg_name)
             
             list_view.append(
                 PackageItem(
-                    pkg_name,
-                    "",  # No description in list view
-                    size,
-                    "Installed" if is_installed else "Not Installed"
+                    pkg_name=pkg_name,
+                    name=display_name,
+                    description="",  # No description in list view
+                    size="",  # Size shown in details panel
+                    status="Installed" if is_installed else "Not Installed"
                 )
             )
         
@@ -453,5 +505,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
-
