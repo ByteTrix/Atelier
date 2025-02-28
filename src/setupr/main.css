@@ -1,143 +1,248 @@
-/* Main Layout */
+/* Modern styling for the package installer */
+
+/* Theme color variables */
+.-dark-mode {
+    --bg-primary: #1E1E1E;
+    --bg-secondary: #252525;
+    --bg-hover: #2C3E50;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0AEC0;
+    --border-color: #3D4852;
+    --accent-color: #2D7FF9;
+    --success-color: #34C759;
+    --warning-color: #5AC8FA;
+    --error-color: #FF3B30;
+    --neutral-color: #6C757D;
+}
+
+.-light-mode {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8F9FA;
+    --bg-hover: #E9ECEF;
+    --text-primary: #212529;
+    --text-secondary: #6C757D;
+    --border-color: #DEE2E6;
+    --accent-color: #0D6EFD;
+    --success-color: #198754;
+    --warning-color: #0DCAF0;
+    --error-color: #DC3545;
+    --neutral-color: #ADB5BD;
+}
+
 Screen {
-    background: #1e1e2e;
+    layout: grid;
+    grid-size: 3;
+    grid-columns: 1fr 3fr 1fr;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    width: 100%;
+    height: 100%;
 }
 
 Header {
-    background: #313244;
-    color: #cdd6f4;
-    text-align: center;
-    padding: 1;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-bottom: solid var(--border-color);
+    height: 3;
+    dock: top;
 }
 
 Footer {
-    background: #313244;
-    color: #cdd6f4;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-top: solid var(--border-color);
+    height: 3;
+    dock: bottom;
 }
 
-/* Sidebar */
-#sidebar {
-    width: 30%;
-    padding: 1;
-    background: #313244;
-    border: heavy #45475a;
+/* Panel Layout */
+.pane {
     height: 100%;
+    border: none;
+    overflow: hidden;
 }
 
-.section-title {
-    text-style: bold;
-    color: #a6e3a1;
-    margin-bottom: 1;
+/* Left Panel - Categories */
+#left-pane {
+    border-right: solid var(--border-color);
+    background: var(--bg-secondary);
+    width: auto;
+}
+
+/* Center Panel */
+#center-pane {
+    background: var(--bg-primary);
+    width: 100%;
+}
+
+/* Right Panel */
+#right-pane {
+    border-left: solid var(--border-color);
+    background: var(--bg-secondary);
+    width: auto;
 }
 
 .category-list {
-    color: #8be9fd;
-    margin: 1 0;
-}
-
-#search_input {
-    border: solid #f5e0dc;
-    padding: 0 1;
-    margin: 1 0;
-    background: #1e1e2e;
-}
-
-/* Main Content */
-#main_content {
-    width: 70%;
-    padding: 1;
-    background: #1e1e2e;
-}
-
-ListView {
-    border: round #585b70;
-    padding: 1;
+    padding: 0;
     height: 100%;
-    scrollbar-color: #45475a;
+    overflow-y: scroll;
 }
 
-/* Package Item Styling */
-.package-item {
-    padding: 0 1;
-    margin: 0 0 0 0;
-    border: solid #45475a;
-    background: #313244;
-    height: 3;
-    width: 100%;
-}
-
-ListView {
-    background: #1e1e2e;
-    width: 100%;
+.section-title {
+    background: var(--bg-hover);
+    color: var(--text-primary);
     padding: 1;
+    text-style: bold;
+    border-bottom: solid var(--border-color);
+    text-align: center;
+}
+
+.category-btn {
+    width: 100%;
+    padding: 1 2;
+    margin: 0;
+    background: transparent;
+    color: var(--text-primary);
     border: none;
-}
-
-ListView > * {
-    margin-bottom: 0;
-    width: 100%;
-}
-
-.package-item:focus {
-    border: double #89b4fa;
-    background: #1e1e2e;
-}
-
-.package-info {
-    margin-left: 1;
-    width: 100%;
-    height: auto;
-}
-
-.package-header {
-    width: 100%;
-    height: 3;
-    align: center middle;
-    padding: 0;
-}
-
-.package-header Label {
-    margin-right: 2;
-    height: 1;
-}
-
-Checkbox {
-    background: #45475a;
-    padding: 0 1;
-    margin-top: 1;
-}
-
-Checkbox:focus {
-    background: #89b4fa;
-}
-
-Label {
     text-align: left;
-    padding: 0;
 }
 
-/* Details Pane */
-#details {
-    border: round #585b70;
-    padding: 2;
-    margin: 1 0 0 1;
-    background: #313244;
-    color: #cdd6f4;
+.category-btn:hover {
+    background: var(--accent-color);
+}
+
+.category-btn.-selected {
+    background: var(--accent-color);
+    text-style: bold;
+}
+
+#search-container {
+    background: var(--bg-secondary);
+    padding: 1;
+    border-bottom: solid var(--border-color);
+}
+
+Input {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: solid var(--border-color);
+    width: 100%;
+    padding: 1;
+}
+
+Input:focus {
+    border: solid var(--accent-color);
+}
+
+#package-grid {
+    width: 100%;
     height: 100%;
-    max-width: 60;
-    overflow-x: hidden;
+    layout: vertical;
+    background: var(--bg-primary);
+    scrollbar-gutter: stable;
 }
 
-#details_container {
-    width: 35%;
-    min-width: 40;
-    max-width: 60;
+#grid-content {
+    padding: 1;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
 }
 
+.package-card {
+    margin: 0 0 1 0;
+    background: var(--bg-secondary);
+    border: solid var(--border-color);
+    height: auto;
+    width: 100%;
+}
 
-/* Scrollbar Styling */
+.package-card:hover {
+    background: var(--bg-hover);
+    border: solid var(--accent-color);
+}
+
+.package-card.selected {
+    border: solid var(--accent-color);
+    background: var(--bg-hover);
+}
+
+.status-badge {
+    text-align: center;
+    padding: 0 1;
+    color: var(--text-primary);
+}
+
+.status-badge.installed {
+    background: var(--success-color);
+}
+
+.status-badge.not-installed {
+    background: var(--neutral-color);
+}
+
+.status-badge.installing {
+    background: var(--warning-color);
+}
+
+.status-badge.failed {
+    background: var(--error-color);
+}
+
+.loading-text, .no-results {
+    padding: 2;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* Detail Panel */
+.detail-panel {
+    height: 100%;
+}
+
+.panel-section {
+    margin: 0 0 1 0;
+    padding: 0;
+    background: var(--bg-secondary);
+    border: solid var(--border-color);
+}
+
+#details-content {
+    padding: 1;
+    color: var(--text-primary);
+    height: auto;
+    overflow-y: scroll;
+}
+
+#install-progress {
+    margin: 1 0;
+    padding: 1;
+}
+
+#progress-bar {
+    height: 1;
+    width: 100%;
+}
+
+ProgressBar > .bar {
+    background: var(--accent-color);
+}
+
+#terminal-content {
+    background: #000000;
+    color: #FFFFFF;
+    padding: 1;
+    height: 20vh;
+    min-height: 10;
+    margin-top: 1;
+    overflow-y: scroll;
+}
+
+/* Scrollbars */
 * {
-    scrollbar-background: #313244;
-    scrollbar-color: #45475a;
-    scrollbar-corner-color: #313244;
+    scrollbar-size: 1 1;
+    scrollbar-background: var(--bg-secondary);
+    scrollbar-color: var(--border-color);
+    scrollbar-color-hover: var(--accent-color);
+    scrollbar-color-active: var(--accent-color);
 }

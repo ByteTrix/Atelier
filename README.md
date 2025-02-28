@@ -1,85 +1,109 @@
-# Setupr
+# Setupr - Modern Package Installer
 
-A modern terminal UI for bulk installing Linux applications, built with Python and Textual.
-
-![Setupr UI Demo](./docs/setupr-demo.png)
+A modern terminal UI package installer for Linux systems with an intuitive three-pane layout and sleek design.
 
 ## Features
 
-- 🎨 Modern, intuitive terminal user interface
-- 📦 Real-time package information and status
-- 🔍 Quick search and category filtering
-- ✨ Bulk package installation
-- 🎯 Smart error handling and user feedback
-- ⌨️ Keyboard-driven navigation
+- 🎯 Clean, modern three-pane interface
+- 🔍 Global search across all packages
+- 📦 Category-based package organization
+- 💻 Real-time installation progress
+- 🖥️ Terminal output integration
+- 🎨 Modern, responsive design
+- 🚀 Multi-distribution support
 
-## Requirements
+## Layout
 
-- Python 3.8 or higher
-- Linux-based system with `apt` package manager
-- `pkexec` for privilege escalation
-- Python packages (installed automatically):
-  - textual>=0.47.1
-  - distro>=1.9.0
-  - pkginfo>=1.9.6
+```
+┌─────────────┬────────────────────┬─────────────┐
+│  Categories │    Package Grid    │  Details    │
+│             │                    │    Panel    │
+│ [Development│ ┌──┐ ┌──┐ ┌──┐     │            │
+│  IDEs       │ │  │ │  │ │  │     │ Package    │
+│  Databases  │ └──┘ └──┘ └──┘     │ Details    │
+│  Tools      │ ┌──┐ ┌──┐ ┌──┐     │            │
+│  Cloud      │ │  │ │  │ │  │     │ Progress   │
+│  Web        │ └──┘ └──┘ └──┘     │ Terminal   │
+└─────────────┴────────────────────┴─────────────┘
+```
 
 ## Installation
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/setupr.git
-cd setupr
-```
-
-2. Install using pip:
-```bash
-pip install -r requirements.txt
-```
-
-Or using Poetry:
-```bash
-poetry install
+pip install setupr
 ```
 
 ## Usage
 
-Run the application:
 ```bash
-python -m setupr.main
+setupr
 ```
 
 ### Keyboard Shortcuts
 
-- `q` - Quit the application
-- `/` or `s` - Focus search
-- `↑`/`↓` - Navigate package list
-- `Enter` - Toggle package selection
-- `i` - Install selected packages
+- `/` or `s`: Focus search
+- `i`: Install selected packages
+- `q`: Quit application
 
-### Features
+## Development
 
-1. **Package Categories**
-   - Development: git, python3, nodejs, vscode, docker
-   - Multimedia: vlc, gimp, audacity, obs-studio, kdenlive
-   - Utilities: firefox, chromium, telegram-desktop, spotify, discord
-   - System Tools: htop, neofetch, timeshift, gparted, synaptic
+### Requirements
+- Python 3.7+
+- Textual library
+- distro library
 
-2. **Real-time Package Information**
-   - Installation status
-   - Package size
-   - Detailed descriptions
-   - Category grouping
+### Setup Development Environment
 
-3. **Search and Filter**
-   - Quick search functionality
-   - Category-based filtering
-   - Live search results
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/setupr.git
+cd setupr
 
-4. **Bulk Installation**
-   - Select multiple packages
-   - One-click installation
-   - Progress tracking
-   - Error handling
+# Install dependencies
+pip install -e .
+```
+
+### Project Structure
+
+```
+src/setupr/
+├── __init__.py
+├── main.py              # Main app entry point
+├── main.css            # Main CSS styles
+├── ui/
+│   ├── __init__.py
+│   ├── widgets.py      # Custom widgets
+│   └── views.py        # Main view components
+├── core/
+│   ├── __init__.py
+│   ├── package_manager.py     # Package management
+│   ├── package_data.py       # Package metadata
+│   └── system.py            # System utilities
+└── utils/
+    ├── __init__.py
+    └── helpers.py          # Helper functions
+```
+
+## Features
+
+### Package Management
+- Cross-distribution support (apt, dnf, pacman)
+- Asynchronous package operations
+- Progress tracking
+- Error handling
+
+### User Interface
+- Modern card-based design
+- Real-time updates
+- Smooth animations
+- Responsive layout
+- Dark/light theme support
+
+### Search and Filtering
+- Global search across all packages
+- Category filtering
+- Advanced search options
+- Quick filters
 
 ## Contributing
 
@@ -87,4 +111,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
