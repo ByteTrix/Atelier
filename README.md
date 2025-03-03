@@ -46,6 +46,7 @@ A sleek, efficient terminal UI package manager for Linux systems that combines p
 │ ○ A-Z       │                                  │ Fetching dependencies...    │
 │ ○ Size      │                                  │ Processing triggers... ▋    │
 └─────────────┴──────────────────────────────────┴─────────────────────────────┘
+```
 
 ## Design Philosophy
 
