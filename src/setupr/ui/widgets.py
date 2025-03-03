@@ -9,6 +9,8 @@ from textual.message import Message
 from textual.binding import Binding
 from textual.geometry import Size
 from rich.text import Text
+from textual.css.query import NoMatches
+import time
 
 class PackageSelected(Message):
     """Event sent when a package is selected."""
@@ -22,373 +24,200 @@ class CategorySelected(Message):
         self.category = category
         super().__init__()
 
-class LoadingIndicator(Widget):
-    """A loading indicator widget with progress bar."""
+class LoadingIndicator(Static):
+    """Widget to show loading progress."""
     
-    # Reactive state
-    progress = reactive(0)
-    error_message = reactive("")
-    
-    DEFAULT_CSS = """
-    LoadingIndicator {
-        width: 100%;
-        height: auto;
-        padding: 1;
-    }
-    LoadingIndicator .loading-text {
-        text-align: center;
-        margin-bottom: 1;
-    }
-    LoadingIndicator .error-text {
-        color: red;
-        text-align: center;
-    }
-    """
-    
-    def compose(self) -> ComposeResult:
-        """Compose the loading indicator."""
-        yield Static("Loading packages...", classes="loading-text")
-        yield ProgressBar()
-        yield Static("", classes="error-text", id="error-message")
-    
-    def watch_progress(self, value: int) -> None:
-        """Watch progress value changes."""
-        if value < 0:
-            value = 0
-        elif value > 100:
-            value = 100
-            
-        progress_bar = self.query_one(ProgressBar)
-        progress_bar.progress = value / 100
-        
-        loading_text = self.query_one(".loading-text", Static)
-        loading_text.update(f"Loading packages... {value}%")
-    
-    def update_progress(self, value: int) -> None:
-        """Update the progress value."""
-        self.progress = value
-    
-    def update_error(self, message: str) -> None:
-        """Display an error message."""
-        self.error_message = message
-        error_display = self.query_one("#error-message")
-        error_display.update(message)
-        
-        # Hide progress bar and show error in red
+    def __init__(self):
+        super().__init__()
         self.progress = 0
-        loading_text = self.query_one(".loading-text", Static)
-        loading_text.update("Error loading packages")
+    
+    def compose(self):
+        with Vertical(classes="loading-container"):
+            yield Label("Loading packages...", id="loading-text")
+            yield Static("", id="loading-progress")
+    
+    def update_progress(self, progress: int):
+        """Update the loading progress bar."""
+        self.progress = progress
+        
+        try:
+            progress_bar = self.query_one("#loading-progress")
+            progress_bar.update(f"[{'#' * int(progress / 2)}{' ' * (50 - int(progress / 2))}] {progress}%")
+        except NoMatches:
+            pass
+    
+    def update_error(self, error_message: str):
+        """Show an error message instead of the progress bar."""
+        try:
+            self.query_one("#loading-text").update("Error loading packages")
+            self.query_one("#loading-progress").update(error_message)
+        except NoMatches:
+            pass
 
 class NoResultsIndicator(Static):
-    """A no results indicator widget."""
+    """Widget shown when no packages match the current filters."""
     
-    def render(self) -> Text:
-        """Return a Text object for rendering."""
-        return Text("No packages found")
+    def compose(self):
+        with Vertical(classes="no-results"):
+            yield Label("No packages found", classes="no-results-title")
+            yield Label("Try adjusting your search or category filters", classes="no-results-help")
 
-class PackageCard(Widget):
-    """A modern card-style package item."""
+class PackageCard(Static):
+    """Card displaying information about a package."""
     
-    # Reactive attributes
-    pkg_name = reactive("")
-    display_name = reactive("")
-    description = reactive("")
-    package_size = reactive("Unknown")  # Renamed from size to avoid conflict
-    status = reactive("not-installed")
-    category = reactive("")
-    selected = reactive(False)
-    
-    DEFAULT_CSS = """
-    PackageCard {
-        background: $surface;
-        border: solid $primary;
-        margin: 0 0 1 0;
-        padding: 1;
-        width: 100%;
-        min-height: 5;
-        height: auto;
-    }
-    PackageCard:hover {
-        background: $boost;
-        border: solid $accent;
-    }
-    PackageCard.selected {
-        border: solid $accent;
-        background: $boost;
-    }
-    PackageCard .header {
-        margin-bottom: 1;
-    }
-    PackageCard .package-name {
-        text-style: bold;
-    }
-    PackageCard .status-badge {
-        margin-left: 2;
-        color: $text;
-        text-align: right;
-    }
-    PackageCard .package-description {
-        color: $text-muted;
-        margin: 1 0;
-    }
-    PackageCard .package-size {
-        color: $text-muted;
-        text-align: right;
-    }
-    """
-    @property
-    def size(self) -> Size:
-        """Override to provide proper size dimensions."""
-        # Minimum size plus padding
-        return Size(self.container_size.width or 40, 6)
-
-    def get_content_height(self, container: Size, viewport: Size, width: int) -> int:
-        """Get content height."""
-        # Allow content to expand based on description
-        base_height = 6  # Minimum height
-        if self.description:
-            # Add extra height for description
-            lines = (len(self.description) + 99) // 100  # Description is truncated at 100 chars
-            base_height += lines
-        return base_height
-    
-    def __init__(self) -> None:
-        """Initialize the package card."""
+    def __init__(
+        self,
+        pkg_name: str,
+        display_name: str,
+        description: str,
+        size: str,
+        status: str,
+        category: str,
+    ) -> None:
         super().__init__()
-        self.add_class("package-card")
-        
-        # Default values
-        self.pkg_name = ""
-        self.display_name = ""
-        self.description = ""
-        self.package_size = "Unknown"
-        self.status = "not-installed"
-        self.category = ""
+        self.pkg_name = pkg_name
+        self.display_name = display_name
+        self.description = description
+        self.size = size
+        self.status = status
+        self.category = category
         self.selected = False
     
-    @classmethod
-    def create(
-        cls,
-        *,  # Force keyword arguments
-        pkg_name: str,
-        display_name: str = "",
-        description: str = "",
-        size: str = "Unknown",
-        status: str = "not-installed",
-        category: str = ""
-    ) -> "PackageCard":
-        """Create a new PackageCard with the given attributes."""
-        card = cls()
-        card.pkg_name = pkg_name
-        card.display_name = display_name or pkg_name
-        card.description = description
-        card.package_size = size
-        card.status = status
-        card.category = category
-        return card
-    
-    def compose(self) -> ComposeResult:
-        """Compose package card content."""
-        # Status indicator
-        status_text = {
-            "installed": "✓ Installed",
-            "not-installed": "◯ Not Installed",
-            "installing": "⟳ Installing",
-            "failed": "✕ Failed"
-        }.get(self.status, self.status)
+    def compose(self):
+        status_class = f"status-{self.status}"
         
-        # Create card content
-        with Container():
-            # Header
-            with Horizontal(classes="header"):
+        with Horizontal(classes="package-card"):
+            with Vertical(classes="package-info"):
                 yield Label(self.display_name, classes="package-name")
-                yield Static(status_text, classes=f"status-badge {self.status}")
-            
-            # Description
-            if self.description:
-                desc = self.description[:100] + "..." if len(self.description) > 100 else self.description
-                yield Static(desc, classes="package-description")
-            
-            # Footer
-            yield Static(f"Size: {self.package_size}", classes="package-size")
-
-    def watch_selected(self, selected: bool) -> None:
-        """Watch selected state changes."""
-        if selected:
+                yield Label(self.description, classes="package-description")
+                
+            with Vertical(classes="package-meta"):
+                yield Label(self.size, classes="package-size")
+                yield Label(self.status, classes=f"package-status {status_class}")
+    
+    def on_click(self):
+        self.selected = not self.selected
+        if self.selected:
             self.add_class("selected")
         else:
             self.remove_class("selected")
-    
-    async def on_click(self) -> None:
-        """Handle click event."""
-        self.selected = not self.selected
-        self.post_message(PackageSelected(self))
-    
-    def render(self) -> Text:
-        """Return a Text object for rendering."""
-        text = Text()
-        text.append(self.display_name)
         
-        # Add status with proper symbol
-        status_text = {
-            "installed": "✓ Installed",
-            "not-installed": "◯ Not Installed",
-            "installing": "⟳ Installing",
-            "failed": "✕ Failed"
-        }.get(self.status, self.status)
-        text.append(f"\n{status_text}")
-        
-        if self.description:
-            text.append(f"\n{self.description[:100]}")
-        text.append(f"\nSize: {self.package_size}")
-        return text
+        self.emit_no_wait(PackageSelected(self))
 
-class CategoryList(Widget):
-    """Left panel showing package categories."""
+class CategoryButton(Button):
+    """A button representing a package category."""
+    def __init__(self, category: str, count: int = 0) -> None:
+        super().__init__(f"{category} ({count})" if count > 0 else category)
+        self.category = category
     
-    CATEGORIES = [
-        ("All", "All Packages 📦"),
-        ("Development", "Development 🔧"),
-        ("IDEs & Editors", "IDEs & Editors 📝"),
-        ("Databases", "Databases 🗄️"),
-        ("Development Tools", "Dev Tools 🛠️"),
-        ("Containers & Cloud", "Cloud & Containers ☁️"),
-        ("Web Servers", "Web Servers 🌐"),
-        ("System Tools", "System Tools ⚙️"),
-        ("Utilities", "Utilities 🔨")
-    ]
-    
-    # Reactive state
-    selected_category = reactive("All")
-    
-    def compose(self) -> ComposeResult:
-        """Compose the category list."""
-        yield Static("Categories", classes="section-title")
-        with ScrollableContainer(classes="category-list"):
-            for category_id, label in self.CATEGORIES:
-                yield Button(label, classes="category-btn", id=f"cat-{category_id.lower()}")
-    
-    def watch_selected_category(self, new_category: str) -> None:
-        """Watch for category changes and update button states."""
-        for button in self.query(".category-btn"):
-            if button.id == f"cat-{new_category.lower()}":
-                button.add_class("-selected")
-            else:
-                button.remove_class("-selected")
-    
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle category button presses."""
-        category = event.button.id.replace("cat-", "").replace("-", " ").title()
-        if category.lower() == "all":
-            category = "All"
-        
-        self.selected_category = category
-        self.post_message(CategorySelected(category))
-    
-    def render(self) -> Text:
-        """Return a Text object for rendering."""
-        text = Text("Categories\n")
-        for category_id, label in self.CATEGORIES:
-            style = "bold" if category_id == self.selected_category else ""
-            text.append(f"\n{label}", style=style)
-        return text
+    def on_click(self) -> None:
+        self.app.query(".category-button").remove_class("selected")
+        self.add_class("selected")
+        self.emit_no_wait(CategorySelected(self.category))
 
-class DetailPanel(Widget):
-    """Right panel showing package details and installation progress."""
+class CategoryList(Static):
+    """Widget that displays a list of package categories."""
     
-    # Reactive state
-    current_package = reactive(None)
-    current_progress = reactive(0.0)
-    current_status = reactive("")
-    current_details = reactive("")
+    def __init__(self) -> None:
+        super().__init__()
+        self.categories = {
+            "All": 0,
+            "Development": 0,
+            "Languages": 0,
+            "Libraries": 0,
+            "Frameworks": 0,
+            "Databases": 0,
+            "Tools": 0,
+            "Cloud": 0,
+            "Other": 0
+        }
     
-    def compose(self) -> ComposeResult:
-        """Compose the detail panel layout."""
-        with Container(classes="detail-panel"):
-            # Package info section
-            with ScrollableContainer(classes="panel-section", id="package-info"):
-                yield Static("Package Details", classes="section-title")
-                yield Static("", id="details-content", classes="details-text")
-            
-            # Installation progress section
-            with Container(classes="panel-section", id="install-progress"):
-                yield Static("Installation Progress", classes="section-title")
-                progress_bar = ProgressBar(id="progress-bar")
-                progress_bar.progress = 0
-                yield progress_bar
-                yield Static("", id="progress-status", classes="status-text")
-                yield Static("", id="progress-details", classes="details-text")
-            
-            # Terminal output section
-            with ScrollableContainer(classes="panel-section", id="terminal-output"):
-                yield Static("Terminal Output", classes="section-title")
-                yield Static("", id="terminal-content", classes="terminal-text")
+    def compose(self):
+        yield Label("Categories", classes="section-title")
+        with Vertical(id="category-list"):
+            for category, count in self.categories.items():
+                button = CategoryButton(category, count)
+                if category == "All":
+                    button.add_class("selected")
+                button.add_class("category-button")
+                yield button
     
-    def update_package(self, pkg_info: dict) -> None:
-        """Update package details."""
-        self.current_package = pkg_info if pkg_info else None
-        content = "No package selected"
+    def update_counts(self, category_counts):
+        self.categories.update(category_counts)
         
-        if pkg_info:
-            content = (
-                f"{pkg_info['display_name']}\n\n"
-                f"Category: {pkg_info['category']}\n"
-                f"Size: {pkg_info['size']}\n"
-                f"Status: {pkg_info['status']}\n\n"
-                f"Description:\n{pkg_info['description']}"
-            )
-        
-        self.query_one("#details-content").update(content)
+        try:
+            category_list = self.query_one("#category-list")
+            category_list.remove_children()
+            
+            for category, count in self.categories.items():
+                button = CategoryButton(category, count)
+                if category == self.app._current_category:
+                    button.add_class("selected")
+                button.add_class("category-button")
+                category_list.mount(button)
+        except NoMatches:
+            pass
+
+class DetailPanel(Static):
+    """Panel that displays details about a selected package."""
     
-    def update_progress(
-        self,
-        progress: float,
-        status: str,
-        details: str
-    ) -> None:
-        """Update installation progress."""
-        self.current_progress = progress
-        self.current_status = status
-        self.current_details = details
+    def __init__(self):
+        super().__init__()
+        self.current_package = None
+        self.progress = 0
+        self.progress_status = ""
+        self.progress_details = ""
+    
+    def compose(self):
+        yield Label("Package Details", classes="section-title")
         
-        # Update the actual progress bar widget if it exists
-        progress_bar = self.query_one("#progress-bar", ProgressBar)
-        if progress_bar:
-            progress_bar.progress = progress / 100  # Assuming progress is in percentage (0-100)
-        
-        # Update status and details text widgets
-        status_widget = self.query_one("#progress-status", Static)
-        if status_widget:
-            status_widget.update(status)
-        
-        details_widget = self.query_one("#progress-details", Static)
-        if details_widget:
-            details_widget.update(details)
-        
-    def render(self) -> Text:
-        """Return a Text object for rendering."""
-        text = Text()
-        
-        if self.current_package is None:
-            text.append("No package selected")
-        else:
-            text.append(self.current_package['display_name'])
-            text.append("\n\n")
-            text.append(f"Category: {self.current_package.get('category', '')}\n")
-            text.append(f"Size: {self.current_package.get('size', 'Unknown')}\n")
-            text.append(f"Status: {self.current_package.get('status', 'Unknown')}\n")
+        with Vertical(id="package-details", classes="detail-panel"):
+            yield Label("Select a package to view details", id="no-selection")
             
-            # Show progress information if available
-            if self.current_progress > 0 or self.current_status:
-                text.append(f"\nProgress: {self.current_progress}%\n")
-                if self.current_status:
-                    text.append(f"Status: {self.current_status}\n")
-                if self.current_details:
-                    text.append(f"Details: {self.current_details}\n")
+            with Vertical(id="details-content", classes="hidden"):
+                yield Label("", id="detail-name", classes="detail-title")
+                yield Label("", id="detail-category", classes="detail-meta")
+                yield Label("", id="detail-size", classes="detail-meta")
+                yield Label("", id="detail-status", classes="detail-meta")
+                yield Label("", id="detail-description", classes="detail-description")
+        
+        yield Label("Installation Progress", classes="section-title")
+        
+        with Vertical(id="progress-panel", classes="progress-panel"):
+            yield Label("No active installation", id="progress-status")
+            yield Static("", id="progress-bar")
+            yield Label("", id="progress-details")
+    
+    def update_package(self, package_data):
+        """Update the panel with package details."""
+        self.current_package = package_data
+        
+        # Update UI with package details
+        try:
+            self.query_one("#no-selection").add_class("hidden")
+            self.query_one("#details-content").remove_class("hidden")
             
-            text.append("\n")
-            if 'description' in self.current_package:
-                text.append("Description:\n")
-                text.append(self.current_package['description'])
-                
-        return text
+            self.query_one("#detail-name").update(package_data["display_name"])
+            self.query_one("#detail-category").update(f"Category: {package_data['category']}")
+            self.query_one("#detail-size").update(f"Size: {package_data['size']}")
+            self.query_one("#detail-status").update(f"Status: {package_data['status']}")
+            self.query_one("#detail-description").update(package_data["description"])
+        except NoMatches:
+            pass
+    
+    def update_progress(self, progress: int, status: str, details: str = ""):
+        """Update the installation progress display."""
+        self.progress = progress
+        self.progress_status = status
+        self.progress_details = details
+        
+        try:
+            # Update progress bar
+            progress_bar = self.query_one("#progress-bar")
+            progress_bar.update(f"[{'#' * int(progress / 5)}{' ' * (20 - int(progress / 5))}] {progress}%")
+            
+            # Update status and details
+            self.query_one("#progress-status").update(status)
+            self.query_one("#progress-details").update(details)
+        except NoMatches:
+            pass

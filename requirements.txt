@@ -1,3 +1,0 @@
-textual>=0.47.1
-distro>=1.9.0
-pkginfo>=1.9.6
