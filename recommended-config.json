@@ -1,0 +1,38 @@
+{
+  "name": "Recommended Setup",
+  "description": "Curated selection of essential development tools and applications",
+  "selections": {
+    "apps": {
+      "install-vscode.sh": "Visual Studio Code (Modern, extensible editor)",
+      "install-chrome.sh": "Google Chrome (Fast, popular browser)",
+      "install-firefox.sh": "Firefox (Privacy-focused browser)",
+      "install-discord.sh": "Discord (Voice, video, and text chat)",
+      "install-spotify.sh": "Spotify (Music streaming)",
+      "install-vlc.sh": "VLC Media Player (Versatile media player)"
+    },
+    "cli": {
+      "install-fzf.sh": "Fzf (Fuzzy finder for command line)",
+      "install-ripgrep.sh": "Ripgrep (Fast regex-based search tool)",
+      "install-bat.sh": "Bat (Cat clone with syntax highlighting)",
+      "install-exa.sh": "Eza [exa] (Modern replacement for ls)",
+      "install-zoxide.sh": "Zoxide (Smarter cd command with tracking)",
+      "install-neovim.sh": "Neovim (Hyperextensible Vim-based text editor)",
+      "install-tmux.sh": "Tmux (Terminal multiplexer)"
+    },
+    "containers": {
+      "install-docker.sh": "Docker (Container runtime & builder)",
+      "install-docker-compose.sh": "Docker Compose (Multi-container orchestration)"
+    },
+    "languages": {
+      "install-node.sh": "Node.js & npm (JavaScript runtime)",
+      "install-python.sh": "Python 3 & pip (Fast, versatile language)",
+      "install-go.sh": "Golang (Fast, statically typed language)"
+    },
+    "theme": {
+      "install-gnome-theme.sh": "GNOME Theme (System theme)",
+      "install-gtk-themes.sh": "GTK Themes (Application themes)",
+      "install-icon-themes.sh": "Icon Themes (System icons)",
+      "configure-gnome-settings.sh": "GNOME Settings (Desktop configuration)"
+    }
+  }
+}

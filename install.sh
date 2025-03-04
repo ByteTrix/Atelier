@@ -1,343 +1,301 @@
 #!/usr/bin/env bash
+#
+# Setupr Installation Script
+# -----------------------
+# Modern development environment setup tool
+#
+# Author: Atelier Team
+# License: MIT
+
 set -euo pipefail
 
-# Set installation directory
-INSTALL_DIR="/usr/local/share/Setupr"
-CONFIG_FILE="${INSTALL_DIR}/setupr-config.json"
-CONFIG_TEMP="/tmp/setupr_config_temp.json"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/lib/utils.sh"
 
-# Get actual user's home directory even when run as root
-if [ -n "${SUDO_USER:-}" ]; then
-    REAL_USER=$SUDO_USER
-    REAL_HOME=$(eval echo ~$SUDO_USER)
-else
-    REAL_USER=$USER
-    REAL_HOME=$HOME
-fi
-
-DOWNLOADS_DIR="${REAL_HOME}/Downloads"
-DEFAULT_SAVE_PATH="${DOWNLOADS_DIR}/setupr_config_$(date +%Y%m%d_%H%M%S).json"
-
-# Ensure Downloads directory exists with correct permissions
-mkdir -p "$DOWNLOADS_DIR"
-chown "${REAL_USER}:${REAL_USER}" "$DOWNLOADS_DIR"
-
-# Export INSTALL_DIR for child scripts
-export INSTALL_DIR
-
-# Source shared utilities.
-if [ -f "${INSTALL_DIR}/lib/utils.sh" ]; then
-  source "${INSTALL_DIR}/lib/utils.sh"
-else
-  echo "ERROR: utils.sh not found!" >&2
-  exit 1
-fi
-
-# Check for necessary permissions
-if ! touch "${INSTALL_DIR}/test.permissions" 2>/dev/null; then
-  log_error "Missing write permissions in installation directory"
-  exit 1
-fi
-rm -f "${INSTALL_DIR}/test.permissions"
-
-log_info "Starting Setupr installer..."
-
-# Check distribution version.
-"${INSTALL_DIR}/check-version.sh"
-
-# Determine if we're running GNOME.
-RUNNING_GNOME=$([[ "$XDG_CURRENT_DESKTOP" == *"GNOME"* ]] && echo true || echo false)
-
-if $RUNNING_GNOME; then
-  log_info "Detected GNOME desktop environment"
-  echo "Get ready to make a few choices..."
-fi
-
-# Ensure Gum and jq are installed.
-if ! command -v gum &>/dev/null; then
-  bash "${INSTALL_DIR}/modules/cli/install-gum.sh"
-fi
-
-if ! command -v jq &>/dev/null; then
-  bash "${INSTALL_DIR}/modules/cli/install-jq.sh"
-fi
-
-# Ask user if they want to upload a config
-if gum confirm "Do you want to upload a configuration file?"; then
-  log_info "Please select a configuration file from your Downloads directory"
-  config_files=$(find "$DOWNLOADS_DIR" -name "setupr_config*.json" -type f -printf "%f\n" | sort -r)
-  if [ -n "$config_files" ]; then
-    selected_config=$(echo "$config_files" | gum choose --header "Select a configuration file:")
-    if [ -n "$selected_config" ]; then
-      cp "${DOWNLOADS_DIR}/${selected_config}" "$CONFIG_FILE"
-      log_info "Configuration loaded from ${selected_config}"
+# Function to verify script exists and is executable
+verify_script() {
+    local script="$1"
+    local full_path="${SCRIPT_DIR}/modules/$script"
+    
+    if [ ! -f "$full_path" ]; then
+        log_error "Script not found: $script"
+        return 1
     fi
-  else
-    log_warn "No configuration files found in Downloads directory"
-  fi
+    
+    if [ ! -x "$full_path" ]; then
+        log_info "Making script executable: $script"
+        chmod +x "$full_path"
+    fi
+    
+    echo "$full_path"
+    return 0
+}
+
+# ASCII art logo with color
+print_logo() {
+    gum style \
+        --foreground 212 \
+        --border-foreground 212 \
+        --border double \
+        --align center \
+        --width 50 --margin "1 2" \
+        'Setupr' \
+        '────────────' \
+        'Modern Development Environment'
+}
+
+# Print section header
+print_section() {
+    gum style \
+        --foreground 99 \
+        --bold \
+        --margin "1 0" \
+        "$1"
+}
+
+# Check if running with sudo
+if [ "$EUID" -eq 0 ]; then
+    gum style \
+        --foreground 196 \
+        --bold \
+        --border-foreground 196 \
+        --border thick \
+        --align center \
+        --width 50 --margin "1 2" \
+        "Please do not run this script with sudo."
+    exit 1
 fi
 
-# Check for existing config
-if [ -f "$CONFIG_FILE" ]; then
-  if gum confirm "Found existing configuration. Would you like to use it?"; then
-    display_summary "$CONFIG_FILE"
-    if gum confirm "Proceed with this configuration?"; then
-      config_data=$(load_config "$CONFIG_FILE")
-      mode=$(echo "$config_data" | jq -r '.mode')
-      log_info "Using saved configuration"
+# Clear screen and show welcome
+clear
+print_logo
+
+# System check spinner
+gum spin --spinner dot --title "Performing system check..." -- sleep 2
+
+# Check for required commands
+REQUIRED_COMMANDS=("gum" "jq" "git" "curl")
+MISSING_COMMANDS=()
+
+print_section "System Requirements"
+for cmd in "${REQUIRED_COMMANDS[@]}"; do
+    if ! command -v "$cmd" &>/dev/null; then
+        MISSING_COMMANDS+=("$cmd")
+    fi
+done
+
+if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
+    gum style \
+        --foreground 196 \
+        "Missing required commands: ${MISSING_COMMANDS[*]}"
+    
+    if gum confirm "Would you like to install missing dependencies?"; then
+        sudo apt-get update
+        sudo apt-get install -y "${MISSING_COMMANDS[@]}"
     else
-      mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)" "Custom (User-defined Mode)")
+        exit 1
     fi
-  else
-    mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)" "Custom (User-defined Mode)")
-  fi
-else
-  mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)" "Custom (User-defined Mode)")
 fi
 
-log_info "Selected mode: $mode"
+# Ensure Downloads directory exists
+mkdir -p "$HOME/Downloads"
 
-if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
-  log_info "Running Automatic Installation..."
+# Installation modes with modern styling
+print_section "Installation Mode"
+MODES=(
+    "🚀 Auto Install (Recommended Setup)"
+    "🔨 Interactive Installation (Choose options as you go)"
+    "⚙️  Create New Configuration (Save selections for later)"
+    "📂 Use Saved Configuration (Load previous selections)"
+)
 
-  # Create initial config JSON
-  echo '{
-    "mode": "Automatic (Beginner Mode)",
-    "timestamp": "",
-    "packages": []
-  }' > "$CONFIG_TEMP"
+MODE=$(gum choose \
+    --cursor.foreground="212" \
+    --selected.foreground="212" \
+    --header="Select installation mode:" \
+    --header.foreground="99" \
+    "${MODES[@]}")
 
-  # Add timestamp
-  jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.timestamp = $ts' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+print_section "Processing"
 
-  # Add default packages
-  jq '.packages += ["Flatpak Setup", "Python Runtime", "Node.js Runtime", "VS Code IDE", "Chrome Browser", "Brave Browser", "Docker Engine", "System Config", "GNOME Theme"]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+# Initialize arrays for selected scripts
+declare -a SELECTED_SCRIPTS=()
+declare -a VERIFIED_SCRIPTS=()
 
-  # Move temp config to final location
-  mv "$CONFIG_TEMP" "$CONFIG_FILE"
-
-  # Save config to Downloads with correct permissions
-  cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
-  chown "${REAL_USER}:${REAL_USER}" "$DEFAULT_SAVE_PATH"
-  log_info "Configuration saved to $DEFAULT_SAVE_PATH"
-
-  # Display installation summary
-  display_summary "$CONFIG_FILE"
-  
-  if ! gum confirm "Proceed with installation?"; then
-    log_info "Installation cancelled by user"
-    exit 0
-  fi
-
-  # Enhanced installation with parallel execution and progress tracking
-  declare -A INSTALL_STEPS=(
-    ["Flatpak Setup"]="flatpak-setup.sh"
-    ["Python Runtime"]="modules/languages/install-python.sh"
-    ["Node.js Runtime"]="modules/languages/install-node.sh"
-    ["VS Code IDE"]="modules/ides/install-vscode.sh"
-    ["Chrome Browser"]="modules/browsers/install-chrome.sh"
-    ["Brave Browser"]="modules/browsers/install-brave.sh"
-    ["Docker Engine"]="modules/containers/install-docker.sh"
-    ["System Config"]="modules/config/setup-dotfiles.sh"
-    ["GNOME Theme"]="modules/theme/install-gnome-theme.sh"
-  )
-
-  # Run installations in parallel with error handling
-  log_info "Starting parallel installations..."
-  gum spin --spinner dot --title "Preparing..." -- sleep 1
-
-  for step in "${!INSTALL_STEPS[@]}"; do
-    (
-      script="${INSTALL_DIR}/${INSTALL_STEPS[$step]}"
-      if [[ $script == *"*.sh" ]]; then
-        # Handle wildcard expansions
-        for f in $script; do
-          log_info "Installing ${f##*/}..."
-          if ! bash "$f"; then
-            log_error "Failed to install ${f##*/}"
+case "$MODE" in
+    "🚀 Auto Install"*)
+        if [ -f "${SCRIPT_DIR}/recommended-config.json" ]; then
+            gum style \
+                --foreground 99 \
+                "📦 Loading recommended configuration..."
+            
+            # Read scripts from recommended config
+            while IFS= read -r script; do
+                if [ -n "$script" ]; then
+                    SELECTED_SCRIPTS+=("$script")
+                fi
+            done < <(jq -r '.selections | to_entries[] | .value | to_entries[] | .key' "${SCRIPT_DIR}/recommended-config.json")
+        else
+            log_error "Recommended configuration file not found!"
             exit 1
-          fi
-        done
-      else
-        log_info "Installing $step..."
-        if ! bash "$script"; then
-          log_error "Failed to install $step"
-          exit 1
         fi
-      fi
-    ) &> >(gum format -t template "{{ Italic }}» {{ . }} {{- /}}" >> "${INSTALL_DIR}/install.log") &
-  done
+        ;;
 
-  # Show progress bar while installations run
-  gum spin --spinner line --title "Installing components..." -- \
-    bash -c 'while ps -p $(jobs -p) >/dev/null 2>&1; do sleep 1; done'
+    "🔨 Interactive Installation"*)
+        MENUS=(
+            "apps/menu.sh"
+            "browsers/menu.sh"
+            "cli/menu.sh"
+            "config/menu.sh"
+            "containers/menu.sh"
+            "ides/menu.sh"
+            "languages/menu.sh"
+            "mobile/menu.sh"
+            "theme/menu.sh"
+        )
 
-  # Final system cleanup
-  bash "${INSTALL_DIR}/system-cleanup.sh"
+        for menu in "${MENUS[@]}"; do
+            menu_path="${SCRIPT_DIR}/modules/$menu"
+            if [ -f "$menu_path" ]; then
+                gum spin --spinner dot --title "Loading ${menu%/*} options..." -- sleep 1
+                
+                # Collect selected scripts from menu
+                while IFS= read -r script; do
+                    if [ -n "$script" ]; then
+                        SELECTED_SCRIPTS+=("$script")
+                    fi
+                done < <(bash "$menu_path")
+            fi
+        done
+        ;;
 
-  # Generate installation report
-  log_info "Generating installation report..."
-  {
-    echo "Successful installations:"
-    grep "INFO: Installed" "${INSTALL_DIR}/install.log" || true
-    echo -e "\nWarnings:"
-    grep "WARN:" "${INSTALL_DIR}/install.log" || true
-    echo -e "\nErrors:"
-    grep "ERROR:" "${INSTALL_DIR}/install.log" || true
-  } | gum format > "${INSTALL_DIR}/installation-report.txt"
+    "⚙️  Create New Configuration"*)
+        config_script="${SCRIPT_DIR}/modules/config/create-config.sh"
+        if [ -f "$config_script" ] && [ -x "$config_script" ]; then
+            bash "$config_script"
+            gum style \
+                --foreground 99 \
+                "Configuration saved in Downloads folder. You can use it for installation later."
+        else
+            log_error "Configuration creator not found!"
+        fi
+        exit 0
+        ;;
 
-  # Show final status with improved formatting
-  if gum confirm "Show detailed installation report?" --affirmative="Show" --negative="Skip"; then
-    gum style --border rounded --padding "1 2" --border-foreground 212 < "${INSTALL_DIR}/installation-report.txt" | \
-    gum pager
-  fi
+    "📂 Use Saved Configuration"*)
+        CONFIGS=($(ls -1 "$HOME/Downloads"/setupr-*.json 2>/dev/null || true))
+        
+        if [ ${#CONFIGS[@]} -eq 0 ]; then
+            gum style \
+                --foreground 196 \
+                "No saved configurations found in Downloads folder."
+            exit 1
+        fi
 
-elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
-  log_info "Running Advanced Installation..."
+        # List available configurations
+        print_section "Saved Configurations"
+        CONFIG_FILE=$(gum choose \
+            --cursor.foreground="212" \
+            --selected.foreground="212" \
+            --header="Select a configuration:" \
+            --header.foreground="99" \
+            "${CONFIGS[@]}")
 
-  # Run basic common tasks.
-  bash "${INSTALL_DIR}/system-update.sh"
-  bash "${INSTALL_DIR}/essential-tools.sh"
-  bash "${INSTALL_DIR}/flatpak-setup.sh"
+        if [ -f "$CONFIG_FILE" ]; then
+            gum spin --spinner dot --title "Loading configuration..." -- sleep 1
+            
+            # Read scripts from selected config
+            while IFS= read -r script; do
+                if [ -n "$script" ]; then
+                    SELECTED_SCRIPTS+=("$script")
+                fi
+            done < <(jq -r '.selections | to_entries[] | .value | to_entries[] | .key' "$CONFIG_FILE")
+        else
+            log_error "Configuration file not found!"
+            exit 1
+        fi
+        ;;
 
-  # Create initial config JSON
-  echo '{
-    "mode": "Advanced (Full Interactive Mode)",
-    "timestamp": "",
-    "packages": []
-  }' > "$CONFIG_TEMP"
+    *)
+        log_error "Invalid mode selected."
+        exit 1
+        ;;
+esac
 
-  # Add timestamp
-  jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.timestamp = $ts' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+# Verify selected scripts
+if [ ${#SELECTED_SCRIPTS[@]} -gt 0 ]; then
+    # Verify each script exists and is executable
+    for script in "${SELECTED_SCRIPTS[@]}"; do
+        if verified_path=$(verify_script "$script"); then
+            VERIFIED_SCRIPTS+=("$verified_path")
+        fi
+    done
 
-  # Create a temporary file to collect selected script paths
-  SELECTED_SCRIPTS_FILE="/tmp/Setupr_selected_scripts.txt"
-  > "$SELECTED_SCRIPTS_FILE"
+    # If we have verified scripts to execute
+    if [ ${#VERIFIED_SCRIPTS[@]} -gt 0 ]; then
+        # Show installation summary
+        print_section "Installation Summary"
+        echo "Components to be installed:"
+        for script in "${VERIFIED_SCRIPTS[@]}"; do
+            gum style \
+                --foreground 212 \
+                "• $(basename "$script")"
+        done
 
-  # For each module category, launch its interactive menu and append selected script paths
-  for category in languages cli containers ides browsers apps mobile config theme; do
-    MENU_SCRIPT="${INSTALL_DIR}/modules/${category}/menu.sh"
-    if [ -f "$MENU_SCRIPT" ]; then
-      log_info "Launching ${category} menu..."
-      selections=$(bash "$MENU_SCRIPT")
-      if [ -n "$selections" ]; then
-        echo "$selections" >> "$SELECTED_SCRIPTS_FILE"
-        while IFS= read -r script; do
-          # Extract package name from script path and add to config
-          package_name="${category}/$(basename "${script/.sh/}")"
-          jq --arg pkg "$package_name" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
-        done <<< "$selections"
-      fi
+        # Confirm installation
+        if gum confirm "Would you like to proceed with the installation?"; then
+            # Create progress meter
+            total=${#VERIFIED_SCRIPTS[@]}
+            current=0
+            failed=0
+
+            # Execute verified scripts
+            for script in "${VERIFIED_SCRIPTS[@]}"; do
+                ((current++))
+                name=$(basename "$script")
+                gum style \
+                    --foreground 99 \
+                    "[$current/$total] Installing: $name"
+                
+                if bash "$script"; then
+                    gum style \
+                        --foreground 82 \
+                        "✓ $name installed successfully"
+                else
+                    gum style \
+                        --foreground 196 \
+                        "✗ Failed to install $name"
+                    ((failed++))
+                fi
+            done
+
+            # Show final status
+            print_section "Installation Complete"
+            if [ "$failed" -eq 0 ]; then
+                gum style \
+                    --foreground 82 \
+                    --bold \
+                    --border normal \
+                    --align center \
+                    --width 50 --margin "1 2" \
+                    "🎉 Your development environment is ready!"
+            else
+                gum style \
+                    --foreground 196 \
+                    --bold \
+                    --border normal \
+                    --align center \
+                    --width 50 --margin "1 2" \
+                    "⚠️ Installation completed with $failed errors"
+            fi
+        else
+            gum style \
+                --foreground 99 \
+                "Installation cancelled."
+            exit 0
+        fi
     else
-      log_warn "No interactive menu found for ${category}; skipping."
+        log_error "No valid installation scripts found!"
+        exit 1
     fi
-  done
-
-  # If no packages were selected, add a placeholder
-  if [ "$(jq '.packages | length' "$CONFIG_TEMP")" -eq 0 ]; then
-    jq '.packages += ["No packages selected"]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
-  fi
-
-  # Move temp config to final location
-  mv "$CONFIG_TEMP" "$CONFIG_FILE"
-
-  # Save config to Downloads with correct permissions
-  cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
-  chown "${REAL_USER}:${REAL_USER}" "$DEFAULT_SAVE_PATH"
-  log_info "Configuration saved to $DEFAULT_SAVE_PATH"
-
-  # Display installation summary
-  display_summary "$CONFIG_FILE"
-  
-  if ! gum confirm "Proceed with installation?"; then
-    log_info "Installation cancelled by user"
-    exit 0
-  fi
-
-  # Bulk execute all selected scripts.
-  log_info "Bulk executing selected modules..."
-  while IFS= read -r script; do
-    if [ -n "$script" ]; then
-      log_info "Executing $script..."
-      bash "$script"
-    fi
-  done < "$SELECTED_SCRIPTS_FILE"
-  rm -f "$SELECTED_SCRIPTS_FILE"
-
-  bash "${INSTALL_DIR}/system-cleanup.sh"
-
-elif [[ "$mode" == "Custom (User-defined Mode)" ]]; then
-  log_info "Running Custom (User-defined Mode) Installation..."
-
-  # Create initial config JSON
-  echo '{
-    "mode": "Custom (User-defined Mode)",
-    "timestamp": "",
-    "packages": []
-  }' > "$CONFIG_TEMP"
-
-  # Add timestamp
-  jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.timestamp = $ts' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
-
-  # Allow user to select individual packages
-  log_info "Please select individual packages to install..."
-  for category in languages cli containers ides browsers apps mobile config theme; do
-    MENU_SCRIPT="${INSTALL_DIR}/modules/${category}/menu.sh"
-    if [ -f "$MENU_SCRIPT" ]; then
-      log_info "Launching ${category} menu..."
-      selections=$(bash "$MENU_SCRIPT")
-      if [ -n "$selections" ]; then
-        while IFS= read -r script; do
-          # Extract package name from script path and add to config
-          package_name="${category}/$(basename "${script/.sh/}")"
-          jq --arg pkg "$package_name" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
-        done <<< "$selections"
-      fi
-    else
-      log_warn "No interactive menu found for ${category}; skipping."
-    fi
-  done
-
-  # Move temp config to final location
-  mv "$CONFIG_TEMP" "$CONFIG_FILE"
-
-  # Save config to Downloads with correct permissions
-  cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
-  chown "${REAL_USER}:${REAL_USER}" "$DEFAULT_SAVE_PATH"
-  log_info "Configuration saved to $DEFAULT_SAVE_PATH"
-
-  # Display installation summary
-  display_summary "$CONFIG_FILE"
-  
-  if ! gum confirm "Proceed with installation?"; then
-    log_info "Installation cancelled by user"
-    exit 0
-  fi
-
-  # Bulk execute all selected scripts.
-  log_info "Bulk executing selected modules..."
-  while IFS= read -r script; do
-    if [ -n "$script" ]; then
-      log_info "Executing $script..."
-      bash "$script"
-    fi
-  done < "$SELECTED_SCRIPTS_FILE"
-  rm -f "$SELECTED_SCRIPTS_FILE"
-
-  bash "${INSTALL_DIR}/system-cleanup.sh"
-else
-  log_error "Invalid mode selected. Exiting."
-  exit 1
 fi
-
-if $RUNNING_GNOME; then
-  # Ask about GNOME extensions and themes
-  if gum confirm "Would you like to install additional GNOME extensions and theme options?"; then
-    # Run GNOME extensions menu
-    bash "${INSTALL_DIR}/modules/theme/install-gnome-extensions.sh"
-    bash "${INSTALL_DIR}/modules/theme/configure-gnome-extensions.sh"
-    bash "${INSTALL_DIR}/modules/theme/configure-gnome-settings.sh"
-  fi
-fi
-
-log_info "Setupr installation complete! Please log out and log back in (or reboot) for all changes to take effect."

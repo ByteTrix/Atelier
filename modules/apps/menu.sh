@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 #
-# Productivity Apps Installation Menu
-# --------------------------------
-# Interactive menu for installing productivity and collaboration apps
-#
-# Author: Atelier Team
-# License: MIT
+# Apps Installation Menu
+# -------------------
+# Interactive menu for installing applications
 
 set -euo pipefail
 
@@ -14,52 +11,41 @@ source "${SCRIPT_DIR}/../../lib/utils.sh"
 
 log_info "[apps] Initializing productivity apps installation menu..."
 
-# Define available app options with descriptions
-declare -A APP_OPTIONS=(
-  ["Notion (All-in-one workspace)"]="install-notion.sh"
-  ["Obsidian (Knowledge base & notes)"]="install-obsidian.sh"
-  ["VLC Media Player (Versatile media player)"]="install-vlc.sh"
-  ["Xournal++ (Note taking & PDF annotation)"]="install-xournal.sh"
-  ["Localsend (Local network file sharing)"]="install-localsend.sh"
-  ["WhatsApp (Messaging client)"]="install-whatsapp.sh"
-  ["Spotify (Music streaming)"]="install-spotify.sh"
-  ["Dropbox (Cloud storage & sync)"]="install-dropbox.sh"
-  ["Todoist (Task management)"]="install-todoist.sh"
-  ["Telegram (Secure messaging)"]="install-telegram.sh"
-  ["Ulauncher (Application launcher)"]="install-ulauncher.sh"
-  ["Syncthing (Decentralized file sync)"]="install-syncthing.sh"
-  ["Slack (Team collaboration and communication)"]="install-slack.sh"
-  ["Discord (Voice, video, and text chat)"]="install-discord.sh"
-  ["Postman (API development environment)"]="install-postman.sh"
-  ["Zoom (Video conferencing)"]="install-zoom.sh"
-  ["Joplin (Note taking and to-do application)"]="install-joplin.sh"
-  ["Bitwarden (Password manager)"]="install-bitwarden.sh"
+# Define available options with descriptions
+declare -A OPTIONS=(
+    ["Telegram (Secure messaging)"]="install-telegram.sh"
+    ["WhatsApp (Messaging client)"]="install-whatsapp.sh"
+    ["Discord (Voice, video, and text chat)"]="install-discord.sh"
+    ["Slack (Team collaboration)"]="install-slack.sh"
+    ["Spotify (Music streaming)"]="install-spotify.sh"
+    ["VLC Media Player (Versatile media player)"]="install-vlc.sh"
+    ["Bitwarden (Password manager)"]="install-bitwarden.sh"
+    ["Ulauncher (Application launcher)"]="install-ulauncher.sh"
+    ["Notion (All-in-one workspace)"]="install-notion.sh"
+    ["Obsidian (Knowledge base & notes)"]="install-obsidian.sh"
+    ["Dropbox (Cloud storage & sync)"]="install-dropbox.sh"
+    ["Joplin (Note taking and to-do application)"]="install-joplin.sh"
+    ["Postman (API development environment)"]="install-postman.sh"
+    ["Zoom (Video conferencing)"]="install-zoom.sh"
 )
 
-APP_DESCRIPTIONS=("${!APP_OPTIONS[@]}")
+# Get array of descriptions (keys)
+DESCRIPTIONS=("${!OPTIONS[@]}")
 
-# Display interactive selection menu
+# Display menu and get selections
 log_info "[apps] Displaying productivity apps selection menu..."
-SELECTED_APPS=$(gum choose \
-  --no-limit \
-  --height 20 \
-  --header "📱 Productivity & Collaboration Apps" \
-  --header.foreground="99" \
-  --header "Select apps to install (space to select, enter to confirm):" \
-  "${APP_DESCRIPTIONS[@]}")
+SELECTED=$(gum choose --no-limit \
+    --header "Select apps to install (space to select, enter to confirm):" \
+    "${DESCRIPTIONS[@]}")
 
-# Handle empty selection
-if [ -z "$SELECTED_APPS" ]; then
-  log_warn "[apps] No apps selected; skipping installation."
-  exit 0
-fi
-
-# Process selected options
+# Process and output selected script paths
 log_info "[apps] Processing selected app installations..."
 while IFS= read -r SELECTION; do
-  SCRIPT="${APP_OPTIONS[$SELECTION]}"
-  log_info "[apps] Queuing: $SELECTION"
-  echo "${SCRIPT_DIR}/${SCRIPT}"
-done <<< "$SELECTED_APPS"
+    if [ -n "$SELECTION" ]; then
+        SCRIPT="apps/${OPTIONS[$SELECTION]}"
+        log_info "[apps] Queuing: $SELECTION"
+        echo "$SCRIPT"
+    fi
+done <<< "$SELECTED"
 
 log_info "[apps] App selection complete."
