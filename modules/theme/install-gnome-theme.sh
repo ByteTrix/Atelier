@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Source shared utilities from the repository.
-source ~/.local/share/atelier/lib/utils.sh
+source ~/.local/share/Setupr/lib/utils.sh
 
 log_info "[theme] Launching GNOME Theme Installer using Gum..."
 

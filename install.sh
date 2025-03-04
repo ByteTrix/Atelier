@@ -20,7 +20,7 @@ if ! touch "${INSTALL_DIR}/test.permissions" 2>/dev/null; then
 fi
 rm -f "${INSTALL_DIR}/test.permissions"
 
-log_info "Starting Atelier installer..."
+log_info "Starting Setupr installer..."
 
 # Check distribution version.
 source "./check-version.sh"
@@ -146,7 +146,7 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   bash "${INSTALL_DIR}/flatpak-setup.sh"
 
   # Create a temporary file to collect selected script paths.
-  SELECTED_SCRIPTS_FILE="/tmp/atelier_selected_scripts.txt"
+  SELECTED_SCRIPTS_FILE="/tmp/Setupr_selected_scripts.txt"
   > "$SELECTED_SCRIPTS_FILE"
 
   # For each module category, launch its interactive menu and append selected script paths.
@@ -182,4 +182,4 @@ if $RUNNING_GNOME; then
   gsettings set org.gnome.desktop.session idle-delay 300
 fi
 
-log_info "Atelier installation complete! Please log out and log back in (or reboot) for all changes to take effect."
+log_info "Setupr installation complete! Please log out and log back in (or reboot) for all changes to take effect."

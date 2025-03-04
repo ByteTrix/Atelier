@@ -13,20 +13,20 @@ ascii_art='
 '
 
 echo -e "$ascii_art"
-echo "=> Atelier is for fresh Ubuntu 24.04+ installations only!"
+echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
 echo -e "\nBegin installation (or abort with ctrl+c)..."
 
 sudo apt-get update >/dev/null
 sudo apt-get install -y git >/dev/null
 
-echo "Cloning Atelier..."
-rm -rf ~/.local/share/atelier
-git clone https://github.com/ByteTrix/Atelier.git ~/.local/share/atelier >/dev/null
-if [[ "${ATELIER_REF:-master}" != "master" ]]; then
-  cd ~/.local/share/atelier
-  git fetch origin "${ATELIER_REF:-stable}" && git checkout "${ATELIER_REF:-stable}"
+echo "Cloning Setupr..."
+rm -rf ~/.local/share/Setupr
+git clone https://github.com/ByteTrix/Setupr.git ~/.local/share/Setupr >/dev/null
+if [[ "${Setupr_REF:-master}" != "master" ]]; then
+  cd ~/.local/share/Setupr
+  git fetch origin "${Setupr_REF:-stable}" && git checkout "${Setupr_REF:-stable}"
   cd - >/dev/null
 fi
 
 echo "Installation starting..."
-source ~/.local/share/atelier/install.sh
+source ~/.local/share/Setupr/install.sh

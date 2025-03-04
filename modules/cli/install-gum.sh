@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Define the installation directory (adjust if necessary)
-INSTALL_DIR="${HOME}/.local/share/atelier"
+INSTALL_DIR="${HOME}/.local/share/Setupr"
 
 # Source shared utility functions.
 source "${INSTALL_DIR}/lib/utils.sh"
