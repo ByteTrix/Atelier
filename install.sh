@@ -105,34 +105,33 @@ if [ "$EUID" -eq 0 ] && [ -z "$SUDO_USER" ]; then
     exit 1
 fi
 
-# Clear screen and show welcome
-clear
 
 
-# Initialize sudo if needed (will be skipped if already in sudo context)
+# Initialize sudo session with simplified approach
 init_sudo_session
 
-# System check spinner
-gum spin --spinner dot --title "Performing system check..." -- sleep 2
+# Check and install required dependencies
+REQUIRED_COMMANDS=("gum" "jq" "git" "curl")
+missing_deps=()
 
 # Check for required commands
-REQUIRED_COMMANDS=("gum" "jq" "git" "curl")
-MISSING_COMMANDS=()
 for cmd in "${REQUIRED_COMMANDS[@]}"; do
-  if ! command -v "$cmd" &>/dev/null; then
-    MISSING_COMMANDS+=("$cmd")
-  fi
+    if ! command -v "$cmd" &>/dev/null; then
+        missing_deps+=("$cmd")
+    fi
 done
 
-if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
-  gum style --foreground 196 "Missing required commands: ${MISSING_COMMANDS[*]}"
-  
-  if gum confirm "Would you like to install missing dependencies?"; then
-    sudo_exec apt-get update
-    sudo_exec apt-get install -y "${MISSING_COMMANDS[@]}"
-  else
-    exit 1
-  fi
+# Install missing dependencies if needed
+if [ ${#missing_deps[@]} -gt 0 ]; then
+    gum style --foreground 196 "Missing required commands: ${missing_deps[*]}"
+    if gum confirm "Install missing dependencies?"; then
+        gum spin --spinner dot --title "Installing dependencies..." -- bash -c '
+            sudo_exec apt-get update -qq
+            sudo_exec apt-get install -y '"${missing_deps[*]}"'
+        '
+    else
+        exit 1
+    fi
 fi
 
 # Ensure Downloads directory exists
@@ -299,11 +298,9 @@ while IFS= read -r script; do
   fi
 done < "$SELECTED_SCRIPTS_FILE"
 
-# Cleanup
+# Cleanup temporary files
 rm -f "$SELECTED_SCRIPTS_FILE"
-# Clean up sudo token
-rm -f "/tmp/setupr_sudo_token"
 
-# Run system cleanup
+# Run final system cleanup
 source "${SCRIPT_DIR}/lib/utils.sh"
 bash "${SCRIPT_DIR}/system-cleanup.sh"

@@ -1,65 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Initialize sudo session and cache credentials
+# Simplified sudo session management
 init_sudo_session() {
-    # Create a sudo token file to share across processes
-    SUDO_TOKEN_FILE="/tmp/setupr_sudo_token"
-    
-    # Check if we're already in a sudo context
-    if [ -n "$SUDO_USER" ]; then
-        # Create token file if it doesn't exist
-        if [ ! -f "$SUDO_TOKEN_FILE" ]; then
-            touch "$SUDO_TOKEN_FILE"
-            chmod 600 "$SUDO_TOKEN_FILE"
-        fi
+    # Return early if already in sudo context
+    if [ -n "${SUDO_USER:-}" ]; then
         return 0
     fi
     
     log_info "Initializing sudo session..."
-    # Get sudo timestamp
+    # Request sudo privileges and keep them alive
     sudo -v
+    trap 'sudo -k' EXIT
     
-    # Create or update token file
-    touch "$SUDO_TOKEN_FILE"
-    chmod 600 "$SUDO_TOKEN_FILE"
-    
-    # Start background process to keep sudo token alive
-    (
-        while true; do
-            if [ -f "$SUDO_TOKEN_FILE" ]; then
-                sudo -n true
-                sleep 60
-            else
-                exit 0
-            fi
-        done
-    ) 2>/dev/null &
-    
-    # Store background process PID
-    echo $! > "$SUDO_TOKEN_FILE"
+    # Keep sudo token alive in background without file management
+    (while true; do sudo -v; sleep 50; done) 2>/dev/null &
+    trap 'kill $!' EXIT
 }
 
-# Wrapper function to execute commands with cached sudo
+# Execute command with sudo if needed
 sudo_exec() {
-    # Check for sudo token file
-    if [ -f "/tmp/setupr_sudo_token" ] || [ -n "$SUDO_USER" ]; then
-        if [ -n "$SUDO_USER" ]; then
-            # Already in sudo context
-            "$@"
-        else
-            # Use sudo with cached credentials
-            sudo -n "$@"
-        fi
+    if [ -n "${SUDO_USER:-}" ]; then
+        # Already in sudo context, execute directly
+        "$@"
     else
-        # No cached credentials, ask for password
+        # Not in sudo context, use sudo
         sudo "$@"
     fi
 }
 
-# Helper to check if we're running in a sudo context
+# Check if running with sudo
 is_sudo_context() {
-    [ -n "$SUDO_USER" ]
+    [ -n "${SUDO_USER:-}" ]
 }
 
 log_info() {

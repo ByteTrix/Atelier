@@ -12,15 +12,13 @@ ascii_art='
 
 '
 
-# Ensure running with sudo, not as root directly
-if [ "$EUID" -eq 0 ] && [ -z "$SUDO_USER" ]; then
-  echo "Error: Please run with sudo, not as root directly."
-  exit 1
-fi
-
-if [ "$EUID" -ne 0 ]; then
-  echo "Error: Please run with sudo."
-  exit 1
+# Check for proper sudo usage
+if [ "$EUID" -eq 0 ] && [ -z "${SUDO_USER:-}" ]; then
+    echo "Error: Please run with sudo, not as root directly"
+    exit 1
+elif [ "$EUID" -ne 0 ]; then
+    echo "Error: Please run with sudo"
+    exit 1
 fi
 
 echo -e "$ascii_art"
