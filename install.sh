@@ -118,8 +118,6 @@ gum spin --spinner dot --title "Performing system check..." -- sleep 2
 # Check for required commands
 REQUIRED_COMMANDS=("gum" "jq" "git" "curl")
 MISSING_COMMANDS=()
-
-print_section "System Requirements"
 for cmd in "${REQUIRED_COMMANDS[@]}"; do
   if ! command -v "$cmd" &>/dev/null; then
     MISSING_COMMANDS+=("$cmd")
