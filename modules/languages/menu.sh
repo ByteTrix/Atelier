@@ -24,6 +24,11 @@ declare -A LANGUAGE_OPTIONS=(
   ["Ruby & Bundler (Elegant language)"]="install-ruby.sh"
   ["Golang (Fast, statically typed language)"]="install-go.sh"
   ["Rust (Memory-safe systems language)"]="install-rust.sh"
+  ["Java (Popular, high-level programming language)"]="install-java.sh"
+  ["PHP (Server-side scripting language)"]="install-php.sh"
+  ["Perl (High-level, general-purpose language)"]="install-perl.sh"
+  ["Swift (Powerful and intuitive language for iOS/macOS)"]="install-swift.sh"
+  ["Kotlin (Modern, concise language for JVM and Android)"]="install-kotlin.sh"
 )
 
 # Extract descriptions for gum menu

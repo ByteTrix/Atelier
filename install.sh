@@ -88,13 +88,13 @@ if [ -f "$CONFIG_FILE" ]; then
       mode=$(echo "$config_data" | jq -r '.mode')
       log_info "Using saved configuration"
     else
-      mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+      mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)" "Custom (User-defined Mode)")
     fi
   else
-    mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+    mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)" "Custom (User-defined Mode)")
   fi
 else
-  mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+  mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)" "Custom (User-defined Mode)")
 fi
 
 log_info "Selected mode: $mode"
@@ -239,6 +239,66 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   if [ "$(jq '.packages | length' "$CONFIG_TEMP")" -eq 0 ]; then
     jq '.packages += ["No packages selected"]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
   fi
+
+  # Move temp config to final location
+  mv "$CONFIG_TEMP" "$CONFIG_FILE"
+
+  # Save config to Downloads with correct permissions
+  cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
+  chown "${REAL_USER}:${REAL_USER}" "$DEFAULT_SAVE_PATH"
+  log_info "Configuration saved to $DEFAULT_SAVE_PATH"
+
+  # Display installation summary
+  display_summary "$CONFIG_FILE"
+  
+  if ! gum confirm "Proceed with installation?"; then
+    log_info "Installation cancelled by user"
+    exit 0
+  fi
+
+  # Bulk execute all selected scripts.
+  log_info "Bulk executing selected modules..."
+  while IFS= read -r script; do
+    if [ -n "$script" ]; then
+      log_info "Executing $script..."
+      bash "$script"
+    fi
+  done < "$SELECTED_SCRIPTS_FILE"
+  rm -f "$SELECTED_SCRIPTS_FILE"
+
+  bash "${INSTALL_DIR}/system-cleanup.sh"
+
+elif [[ "$mode" == "Custom (User-defined Mode)" ]]; then
+  log_info "Running Custom (User-defined Mode) Installation..."
+
+  # Create initial config JSON
+  echo '{
+    "mode": "Custom (User-defined Mode)",
+    "timestamp": "",
+    "packages": []
+  }' > "$CONFIG_TEMP"
+
+  # Add timestamp
+  jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.timestamp = $ts' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+
+  # Allow user to select individual packages
+  log_info "Please select individual packages to install..."
+  for category in languages cli containers ides browsers apps mobile config theme; do
+    MENU_SCRIPT="${INSTALL_DIR}/modules/${category}/menu.sh"
+    if [ -f "$MENU_SCRIPT" ]; then
+      log_info "Launching ${category} menu..."
+      selections=$(bash "$MENU_SCRIPT")
+      if [ -n "$selections" ]; then
+        while IFS= read -r script; do
+          # Extract package name from script path and add to config
+          package_name="${category}/$(basename "${script/.sh/}")"
+          jq --arg pkg "$package_name" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+        done <<< "$selections"
+      fi
+    else
+      log_warn "No interactive menu found for ${category}; skipping."
+    fi
+  done
 
   # Move temp config to final location
   mv "$CONFIG_TEMP" "$CONFIG_FILE"

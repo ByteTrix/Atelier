@@ -19,6 +19,9 @@ declare -A CONTAINER_OPTIONS=(
   ["Docker (Container runtime & builder)"]="install-docker.sh"
   ["Docker Compose (Multi-container orchestration)"]="install-docker-compose.sh"
   ["kubectl (Kubernetes CLI tool)"]="install-kubectl.sh"
+  ["Podman (Daemonless container engine)"]="install-podman.sh"
+  ["Minikube (Local Kubernetes)"]="install-minikube.sh"
+  ["Helm (Kubernetes package manager)"]="install-helm.sh"
 )
 
 CONTAINER_DESCRIPTIONS=("${!CONTAINER_OPTIONS[@]}")

@@ -20,6 +20,9 @@ declare -A BROWSER_OPTIONS=(
   ["Firefox (Privacy-focused browser)"]="install-firefox.sh"
   ["Brave Browser (Privacy-first, ad-blocking)"]="install-brave.sh"
   ["Zen Browser (Minimalist, distraction-free)"]="install-zen.sh"
+  ["Opera (Feature-rich, customizable browser)"]="install-opera.sh"
+  ["Vivaldi (Highly customizable, privacy-focused)"]="install-vivaldi.sh"
+  ["Edge (Microsoft's Chromium-based browser)"]="install-edge.sh"
 )
 
 BROWSER_DESCRIPTIONS=("${!BROWSER_OPTIONS[@]}")
