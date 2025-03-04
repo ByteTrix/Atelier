@@ -16,42 +16,27 @@ log_info "[ulauncher] Installing Ulauncher..."
 
 # Check if Ulauncher is already installed
 if ! command -v ulauncher &> /dev/null; then
-    # Add Ulauncher PPA
-    log_info "[ulauncher] Adding Ulauncher repository..."
-    sudo add-apt-repository -y ppa:agornostal/ulauncher
-
     # Install Ulauncher
     log_info "[ulauncher] Installing Ulauncher..."
+    sudo add-apt-repository -y ppa:agornostal/ulauncher
     sudo apt-get update
     sudo apt-get install -y ulauncher
 
-    # Enable Ulauncher service
-    log_info "[ulauncher] Enabling Ulauncher service..."
+    # Enable service and autostart
     systemctl --user enable --now ulauncher
-
-    # Configure autostart
     mkdir -p "$HOME/.config/autostart"
     cp /usr/share/applications/ulauncher.desktop "$HOME/.config/autostart/"
 
     log_success "[ulauncher] Ulauncher installed successfully!"
-
-    # Display help information
-    log_info "[ulauncher] Quick start guide:"
-    echo "
-    - Launch Ulauncher: Super + Space (default shortcut)
-    - Configure preferences: Open Ulauncher settings
-    - Add extensions: Visit https://ext.ulauncher.io/
-    - Change theme: Settings > Appearance
-    "
 else
-    log_warn "[ulauncher] Ulauncher is already installed."
+    log_warn "[ulauncher] Ulauncher is already installed"
 fi
 
 # Verify installation
 if command -v ulauncher &> /dev/null; then
-    log_info "[ulauncher] Ulauncher installation verified."
+    log_info "[ulauncher] Version information:"
     ulauncher --version
 else
-    log_error "[ulauncher] Ulauncher installation could not be verified."
+    log_error "[ulauncher] Installation failed"
     exit 1
 fi

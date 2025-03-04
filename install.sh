@@ -291,39 +291,49 @@ else
 fi
 
 # Prompt to start installation
-if gum confirm "$(gum style --bold --foreground 99 "Ready to install $(gum style --bold --foreground 212 "${#VERIFIED_SCRIPTS[@]}") packages?")"; then
-  total=${#VERIFIED_SCRIPTS[@]}
-  current=0
-  failed=0
-  print_section "🚀 Installing Packages"
-  for script in "${VERIFIED_SCRIPTS[@]}"; do
-    ((current++))
-    name=$(basename "$script" .sh)
-    progress=$((current * 100 / total))
-    gum style --foreground 99 "[$current/$total] ($progress%) Installing: $name"
-    if bash "$script"; then
-      gum style --foreground 82 "✓ $name installed successfully"
-    else
-      gum style --foreground 196 "✗ Failed to install $name"
-      ((failed++))
-      if ! gum confirm "Continue with remaining installations?"; then
-        break
-      fi
+ while IFS= read -r script; do
+    if [ -n "$script" ]; then
+      log_info "Executing $script..."
+      bash "$script"
     fi
-    sleep 0.5
-  done
+  done < "$SELECTED_SCRIPTS_FILE"
+  rm -f "$SELECTED_SCRIPTS_FILE"
+
+ 
+# # Prompt to start installation
+# if gum confirm "$(gum style --bold --foreground 99 "Ready to install $(gum style --bold --foreground 212 "${#VERIFIED_SCRIPTS[@]}") packages?")"; then
+#   total=${#VERIFIED_SCRIPTS[@]}
+#   current=0
+#   failed=0
+#   print_section "🚀 Installing Packages"
+#   for script in "${VERIFIED_SCRIPTS[@]}"; do
+#     ((current++))
+#     name=$(basename "$script" .sh)
+#     progress=$((current * 100 / total))
+#     gum style --foreground 99 "[$current/$total] ($progress%) Installing: $name"
+#     if bash "$script"; then
+#       gum style --foreground 82 "✓ $name installed successfully"
+#     else
+#       gum style --foreground 196 "✗ Failed to install $name"
+#       ((failed++))
+#       if ! gum confirm "Continue with remaining installations?"; then
+#         break
+#       fi
+#     fi
+#     sleep 0.5
+#   done
   
-  print_section "Installation Complete"
-  if [ "$failed" -eq 0 ]; then
-    gum style --foreground 82 --bold --border normal --align center --width 50 --margin "1 2" \
-      "🎉 Your development environment is ready!" "" "All $total packages were successfully installed."
-  else
-    gum style --foreground 196 --bold --border normal --align center --width 50 --margin "1 2" \
-      "⚠️ Installation completed with $failed errors" "" "$((total - failed))/$total packages were successfully installed."
-  fi
-  # Cleanup temporary files
-  rm -f "$SELECTED_SCRIPTS_FILE" "$CONFIG_TEMP"
-else
-  gum style --foreground 99 "Installation cancelled."
-  exit 0
-fi
+#   print_section "Installation Complete"
+#   if [ "$failed" -eq 0 ]; then
+#     gum style --foreground 82 --bold --border normal --align center --width 50 --margin "1 2" \
+#       "🎉 Your development environment is ready!" "" "All $total packages were successfully installed."
+#   else
+#     gum style --foreground 196 --bold --border normal --align center --width 50 --margin "1 2" \
+#       "⚠️ Installation completed with $failed errors" "" "$((total - failed))/$total packages were successfully installed."
+#   fi
+#   # Cleanup temporary files
+#   rm -f "$SELECTED_SCRIPTS_FILE" "$CONFIG_TEMP"
+# else
+#   gum style --foreground 99 "Installation cancelled."
+#   exit 0
+# fi
