@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Source shared utilities from the repository.
-source ~/.local/share/Setupr/lib/utils.sh
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
 log_info "[theme] Launching GNOME Theme Installer using Gum..."
 

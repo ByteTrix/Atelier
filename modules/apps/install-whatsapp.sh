@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source ~/.local/share/Setupr/lib/utils.sh
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
 log_info "[apps/whatsapp] Installing WhatsApp..."
 
