@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Initialize sudo session and cache credentials
+init_sudo_session() {
+    log_info "Initializing sudo session..."
+    # Cache sudo credentials and keep them alive
+    sudo -v
+    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+}
+
+# Wrapper function to execute commands with cached sudo
+sudo_exec() {
+    sudo -n "$@"
+}
+
 log_info() {
   echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2
 }

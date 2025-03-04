@@ -117,6 +117,9 @@ fi
 clear
 print_logo
 
+# Initialize sudo session first
+init_sudo_session
+
 # System check spinner
 gum spin --spinner dot --title "Performing system check..." -- sleep 2
 
@@ -290,37 +293,82 @@ else
   exit 1
 fi
 
-# Prompt to start installation
- while IFS= read -r script; do
-    if [ -n "$script" ]; then
-      log_info "Executing $script..."
-      bash "$script"
-    fi
-  done < "$SELECTED_SCRIPTS_FILE"
-  rm -f "$SELECTED_SCRIPTS_FILE"
+# Export the sudo_exec function so child scripts can use it
+export -f sudo_exec
 
- 
+log_info "Bulk executing selected modules..."
+while IFS= read -r script; do
+  if [ -n "$script" ]; then
+    log_info "Executing $script..."
+    # Set SETUPR_SUDO=1 to tell modules to use sudo_exec
+    SETUPR_SUDO=1 bash "$script"
+  fi
+done < "$SELECTED_SCRIPTS_FILE"
+rm -f "$SELECTED_SCRIPTS_FILE"
+
+# Run cleanup with sudo session
+SETUPR_SUDO=1 bash "${SCRIPT_DIR}/system-cleanup.sh"
+  
+# # Function to execute a script with live output
+# execute_with_output() {
+#   local script="$1"
+#   local name=$(basename "$script" .sh)
+#   local exit_status
+  
+#   # Clear previous output and create a visible header
+#   echo "" | gum style --foreground 212 --bold --width 50 --border double --border-foreground 99 \
+#     "Installing: $name"
+
+#   # Create a visually distinct output area
+#   gum style --border normal --border-foreground 99 --width 100 --padding "0 1" \
+#     "Starting installation..."
+  
+#   # Execute the script and show output in real-time
+#   set +e
+#   bash "$script"
+#   exit_status=$?
+#   set -e
+  
+#   # Create a separator after the real-time output
+#   echo "" | gum style --border-foreground 99 --width 100 \
+#     "Installation finished with status: $([ $exit_status -eq 0 ] && echo "SUCCESS" || echo "FAILED")"
+  
+#   return $exit_status
+# }
+
 # # Prompt to start installation
 # if gum confirm "$(gum style --bold --foreground 99 "Ready to install $(gum style --bold --foreground 212 "${#VERIFIED_SCRIPTS[@]}") packages?")"; then
 #   total=${#VERIFIED_SCRIPTS[@]}
 #   current=0
 #   failed=0
+#   successful=0
+  
 #   print_section "🚀 Installing Packages"
+  
+#   # Show overall progress
+#   gum style --foreground 99 "Total progress:"
+  
 #   for script in "${VERIFIED_SCRIPTS[@]}"; do
 #     ((current++))
 #     name=$(basename "$script" .sh)
+    
+#     # Show progress percentage and bar
 #     progress=$((current * 100 / total))
-#     gum style --foreground 99 "[$current/$total] ($progress%) Installing: $name"
-#     if bash "$script"; then
+#     gum style --foreground 99 "[$current/$total] ($progress%)"
+#     gum style --foreground 212 "$(printf '█%.0s' $(seq 1 $((progress / 5))))"
+    
+#     # Execute with real-time output
+#     if execute_with_output "$script"; then
+#       ((successful++))
 #       gum style --foreground 82 "✓ $name installed successfully"
 #     else
-#       gum style --foreground 196 "✗ Failed to install $name"
 #       ((failed++))
+#       gum style --foreground 196 "✗ Failed to install $name"
+      
 #       if ! gum confirm "Continue with remaining installations?"; then
 #         break
 #       fi
 #     fi
-#     sleep 0.5
 #   done
   
 #   print_section "Installation Complete"
@@ -329,8 +377,9 @@ fi
 #       "🎉 Your development environment is ready!" "" "All $total packages were successfully installed."
 #   else
 #     gum style --foreground 196 --bold --border normal --align center --width 50 --margin "1 2" \
-#       "⚠️ Installation completed with $failed errors" "" "$((total - failed))/$total packages were successfully installed."
+#       "⚠️ Installation completed with $failed errors" "" "$successful/$total packages were successfully installed."
 #   fi
+  
 #   # Cleanup temporary files
 #   rm -f "$SELECTED_SCRIPTS_FILE" "$CONFIG_TEMP"
 # else
