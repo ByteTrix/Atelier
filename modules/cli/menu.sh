@@ -38,14 +38,18 @@ SELECTED=$(gum choose --no-limit \
     --header "Select command-line tools to install (space to select, enter to confirm):" \
     "${DESCRIPTIONS[@]}")
 
+# Handle empty selection
+if [ -z "$SELECTED" ]; then
+  log_warn "[cli] No CLI tools selected; skipping installation."
+  exit 0
+fi
+
 # Process and output selected script paths
 log_info "[cli] Processing selected CLI tool installations..."
 while IFS= read -r SELECTION; do
-    if [ -n "$SELECTION" ]; then
-        SCRIPT="cli/${OPTIONS[$SELECTION]}"
-        log_info "[cli] Queuing: $SELECTION"
-        echo "$SCRIPT"
-    fi
+  SCRIPT="${OPTIONS[$SELECTION]}"
+  log_info "[cli] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
 done <<< "$SELECTED"
 
 log_info "[cli] CLI tools selection complete."

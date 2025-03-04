@@ -18,7 +18,7 @@ source "${SCRIPT_DIR}/../../lib/utils.sh"
 log_info "[languages] Initializing language installation menu..."
 
 # Define available language options with descriptions and installation scripts
-declare -A LANGUAGE_OPTIONS=(
+declare -A OPTIONS=(
   ["Python 3 & pip (Fast, versatile language)"]="install-python.sh"
   ["Node.js & npm (JavaScript runtime)"]="install-node.sh"
   ["Ruby & Bundler (Elegant language)"]="install-ruby.sh"
@@ -32,20 +32,20 @@ declare -A LANGUAGE_OPTIONS=(
 )
 
 # Extract descriptions for gum menu
-LANGUAGE_DESCRIPTIONS=("${!LANGUAGE_OPTIONS[@]}")
+DESCRIPTIONS=("${!OPTIONS[@]}")
 
 # Display interactive selection menu with clear instructions
 log_info "[languages] Displaying language selection menu..."
-SELECTED_LANGUAGES=$(gum choose \
+SELECTED=$(gum choose \
   --no-limit \
   --height 15 \
   --header "💻 Programming Language Installation" \
   --header.foreground="99" \
   --header "Select languages to install (space to select, enter to confirm):" \
-  "${LANGUAGE_DESCRIPTIONS[@]}")
+  "${DESCRIPTIONS[@]}")
 
 # Handle empty selection gracefully
-if [ -z "$SELECTED_LANGUAGES" ]; then
+if [ -z "$SELECTED" ]; then
   log_warn "[languages] No languages selected; skipping installation."
   exit 0
 fi
@@ -53,9 +53,9 @@ fi
 # Process selected options
 log_info "[languages] Processing selected language installations..."
 while IFS= read -r SELECTION; do
-  SCRIPT="${LANGUAGE_OPTIONS[$SELECTION]}"
+  SCRIPT="${OPTIONS[$SELECTION]}"
   log_info "[languages] Queuing: $SELECTION"
   echo "${SCRIPT_DIR}/${SCRIPT}"
-done <<< "$SELECTED_LANGUAGES"
+done <<< "$SELECTED"
 
 log_info "[languages] Language selection complete."

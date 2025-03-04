@@ -30,14 +30,18 @@ SELECTED=$(gum choose --no-limit \
     --header "Select browsers to install (space to select, enter to confirm):" \
     "${DESCRIPTIONS[@]}")
 
+# Handle empty selection
+if [ -z "$SELECTED" ]; then
+  log_warn "[browsers] No browsers selected; skipping installation."
+  exit 0
+fi
+
 # Process and output selected script paths
 log_info "[browsers] Processing selected browser installations..."
 while IFS= read -r SELECTION; do
-    if [ -n "$SELECTION" ]; then
-        SCRIPT="browsers/${OPTIONS[$SELECTION]}"
-        log_info "[browsers] Queuing: $SELECTION"
-        echo "$SCRIPT"
-    fi
+  SCRIPT="${OPTIONS[$SELECTION]}"
+  log_info "[browsers] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
 done <<< "$SELECTED"
 
 log_info "[browsers] Browser selection complete."

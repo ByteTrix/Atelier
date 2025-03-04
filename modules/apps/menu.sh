@@ -38,14 +38,18 @@ SELECTED=$(gum choose --no-limit \
     --header "Select apps to install (space to select, enter to confirm):" \
     "${DESCRIPTIONS[@]}")
 
+# Handle empty selection
+if [ -z "$SELECTED" ]; then
+  log_warn "[apps] No apps selected; skipping installation."
+  exit 0
+fi
+
 # Process and output selected script paths
 log_info "[apps] Processing selected app installations..."
 while IFS= read -r SELECTION; do
-    if [ -n "$SELECTION" ]; then
-        SCRIPT="apps/${OPTIONS[$SELECTION]}"
-        log_info "[apps] Queuing: $SELECTION"
-        echo "$SCRIPT"
-    fi
+  SCRIPT="${OPTIONS[$SELECTION]}"
+  log_info "[apps] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
 done <<< "$SELECTED"
 
 log_info "[apps] App selection complete."

@@ -15,7 +15,7 @@ source "${SCRIPT_DIR}/../../lib/utils.sh"
 log_info "[containers] Initializing container tools installation menu..."
 
 # Define available container tool options with descriptions
-declare -A CONTAINER_OPTIONS=(
+declare -A OPTIONS=(
   ["Docker (Container runtime & builder)"]="install-docker.sh"
   ["Docker Compose (Multi-container orchestration)"]="install-docker-compose.sh"
   ["kubectl (Kubernetes CLI tool)"]="install-kubectl.sh"
@@ -24,20 +24,21 @@ declare -A CONTAINER_OPTIONS=(
   ["Helm (Kubernetes package manager)"]="install-helm.sh"
 )
 
-CONTAINER_DESCRIPTIONS=("${!CONTAINER_OPTIONS[@]}")
+# Get array of descriptions (keys)
+DESCRIPTIONS=("${!OPTIONS[@]}")
 
 # Display interactive selection menu
 log_info "[containers] Displaying container tools selection menu..."
-SELECTED_TOOLS=$(gum choose \
+SELECTED=$(gum choose \
   --no-limit \
   --height 15 \
   --header "🐳 Container Tools Installation" \
   --header.foreground="99" \
   --header "Select container tools to install (space to select, enter to confirm):" \
-  "${CONTAINER_DESCRIPTIONS[@]}")
+  "${DESCRIPTIONS[@]}")
 
 # Handle empty selection
-if [ -z "$SELECTED_TOOLS" ]; then
+if [ -z "$SELECTED" ]; then
   log_warn "[containers] No container tools selected; skipping installation."
   exit 0
 fi
@@ -45,9 +46,9 @@ fi
 # Process selected options
 log_info "[containers] Processing selected container tool installations..."
 while IFS= read -r SELECTION; do
-  SCRIPT="${CONTAINER_OPTIONS[$SELECTION]}"
+  SCRIPT="${OPTIONS[$SELECTION]}"
   log_info "[containers] Queuing: $SELECTION"
   echo "${SCRIPT_DIR}/${SCRIPT}"
-done <<< "$SELECTED_TOOLS"
+done <<< "$SELECTED"
 
 log_info "[containers] Container tools selection complete."

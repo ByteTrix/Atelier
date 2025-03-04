@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DIR="$(dirname "$(realpath "$0")")"
-source "$DIR/../../lib/utils.sh"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-declare -A options=(
+log_info "[mobile] Initializing mobile development tools menu..."
+
+declare -A OPTIONS=(
   ["Android Studio"]="install-android-studio.sh"
   ["Flutter SDK"]="install-flutter.sh"
   ["React Native (JavaScript framework for mobile apps)"]="install-react-native.sh"
@@ -13,19 +15,27 @@ declare -A options=(
   ["Cordova (Mobile apps with HTML, CSS & JS)"]="install-cordova.sh"
 )
 
-descriptions=("${!options[@]}")
+# Get array of descriptions (keys)
+DESCRIPTIONS=("${!OPTIONS[@]}")
 
-selected=$(gum choose --no-limit --header "Mobile Tools" \
-  --header "Select mobile development tools to install:" "${descriptions[@]}")
+# Display menu and get selections
+log_info "[mobile] Displaying mobile tools selection menu..."
+SELECTED=$(gum choose --no-limit \
+    --header "Select mobile development tools to install (space to select, enter to confirm):" \
+    "${DESCRIPTIONS[@]}")
 
-if [ -z "$selected" ]; then
-  log_warn "[mobile/menu] No mobile tools selected; skipping."
+# Handle empty selection
+if [ -z "$SELECTED" ]; then
+  log_warn "[mobile] No mobile tools selected; skipping installation."
   exit 0
 fi
 
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[mobile/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
-log_info "[mobile/menu] Mobile tools installation complete."
+# Process and output selected script paths
+log_info "[mobile] Processing selected mobile tool installations..."
+while IFS= read -r SELECTION; do
+  SCRIPT="${OPTIONS[$SELECTION]}"
+  log_info "[mobile] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
+done <<< "$SELECTED"
+
+log_info "[mobile] Mobile tools selection complete."

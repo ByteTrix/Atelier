@@ -15,7 +15,7 @@ source "${SCRIPT_DIR}/../../lib/utils.sh"
 log_info "[config] Initializing system configuration menu..."
 
 # Define available configuration options with descriptions
-declare -A CONFIG_OPTIONS=(
+declare -A OPTIONS=(
   ["Setup Dotfiles (Configure shell and environment)"]="setup-dotfiles.sh"
   ["Configure VS Code Keyring (Secure credential storage)"]="configure-vscode-keyring.sh"
   ["Configure Firewall (Set up UFW firewall)"]="configure-firewall.sh"
@@ -23,20 +23,21 @@ declare -A CONFIG_OPTIONS=(
   ["Configure Network (Set up network interfaces)"]="configure-network.sh"
 )
 
-CONFIG_DESCRIPTIONS=("${!CONFIG_OPTIONS[@]}")
+# Get array of descriptions (keys)
+DESCRIPTIONS=("${!OPTIONS[@]}")
 
 # Display interactive selection menu
 log_info "[config] Displaying configuration tasks menu..."
-SELECTED_CONFIGS=$(gum choose \
+SELECTED=$(gum choose \
   --no-limit \
   --height 15 \
   --header "⚙️ System Configuration" \
   --header.foreground="99" \
   --header "Select configuration tasks to perform (space to select, enter to confirm):" \
-  "${CONFIG_DESCRIPTIONS[@]}")
+  "${DESCRIPTIONS[@]}")
 
 # Handle empty selection
-if [ -z "$SELECTED_CONFIGS" ]; then
+if [ -z "$SELECTED" ]; then
   log_warn "[config] No configuration tasks selected; skipping."
   exit 0
 fi
@@ -44,9 +45,9 @@ fi
 # Process selected options
 log_info "[config] Processing selected configuration tasks..."
 while IFS= read -r SELECTION; do
-  SCRIPT="${CONFIG_OPTIONS[$SELECTION]}"
+  SCRIPT="${OPTIONS[$SELECTION]}"
   log_info "[config] Queuing: $SELECTION"
   echo "${SCRIPT_DIR}/${SCRIPT}"
-done <<< "$SELECTED_CONFIGS"
+done <<< "$SELECTED"
 
 log_info "[config] Configuration selection complete."
