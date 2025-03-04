@@ -26,16 +26,20 @@ echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
 echo -e "\nBegin installation (or abort with ctrl+c)..."
 
 # Install git if not present
-apt-get update >/dev/null
-apt-get install -y git >/dev/null
-
 # Set up installation directory
 INSTALL_DIR="/usr/local/share/Setupr"
-mkdir -p "$INSTALL_DIR"
 
-echo "Cloning Setupr..."
-rm -rf "$INSTALL_DIR"
-git clone -b upgrage https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"
+# Only clone if directory doesn't exist or is empty
+if [ ! -d "$INSTALL_DIR/.git" ]; then
+    mkdir -p "$INSTALL_DIR"
+    echo "Cloning Setupr..."
+    git clone -b upgrage https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"
+else
+    echo "Updating Setupr..."
+    cd "$INSTALL_DIR"
+    git pull origin upgrage
+    cd - >/dev/null
+fi
 
 if [[ "${Setupr_REF:-master}" != "master" ]]; then
   cd "$INSTALL_DIR"

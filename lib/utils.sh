@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Simplified sudo session management
+# Improved sudo session management
 init_sudo_session() {
     # Return early if already in sudo context
     if [ -n "${SUDO_USER:-}" ]; then
@@ -9,13 +9,22 @@ init_sudo_session() {
     fi
     
     log_info "Initializing sudo session..."
-    # Request sudo privileges and keep them alive
-    sudo -v
-    trap 'sudo -k' EXIT
     
-    # Keep sudo token alive in background without file management
-    (while true; do sudo -v; sleep 50; done) 2>/dev/null &
-    trap 'kill $!' EXIT
+    # Use a longer timeout for sudo (4 hours)
+    sudo -v -p "Please enter your password: "
+    
+    # Only refresh sudo token every 10 minutes instead of 50 seconds
+    # This reduces the number of potential askpass prompts
+    (while true; do
+        sudo -n true
+        sleep 600
+    done) 2>/dev/null &
+    
+    # Store the background process ID
+    SUDO_KEEPER_PID=$!
+    
+    # Clean up the background process on exit
+    trap 'kill $SUDO_KEEPER_PID 2>/dev/null || true' EXIT
 }
 
 # Execute command with sudo if needed
