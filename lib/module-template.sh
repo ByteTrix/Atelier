@@ -5,6 +5,13 @@
 # This template provides a standardized structure for Setupr module installation scripts.
 # It includes proper error handling, dependency checking, and configuration management.
 #
+# Features:
+# - Proper sudo handling with session management
+# - Error handling and validation
+# - Dependency management
+# - Progress tracking
+# - Installation verification
+#
 # Usage:
 #   1. Copy this template to create a new module
 #   2. Replace MODULE_NAME and PACKAGE_NAME variables
@@ -25,12 +32,8 @@ readonly REQUIRED_COMMANDS=()          # Add required commands/dependencies
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-# Determine sudo command based on environment
-if [[ "${SETUPR_SUDO:-0}" == "1" ]]; then
-    SUDO_CMD="sudo_exec"
-else
-    SUDO_CMD="sudo"
-fi
+# Initialize sudo session at the start
+init_sudo_session
 
 # Check if a command exists
 command_exists() {
@@ -65,18 +68,30 @@ check_system_compatibility() {
     return 0
 }
 
+# Install dependencies
+install_dependencies() {
+    log_info "Installing required dependencies..."
+    
+    # Update package index (using sudo_exec to avoid password prompt)
+    sudo_exec apt-get update
+    
+    # Add dependency installation commands here
+    # Example:
+    # if ! sudo_exec apt-get install -y dependency1 dependency2; then
+    #     log_error "Failed to install dependencies"
+    #     return 1
+    # fi
+    
+    return 0
+}
+
 # Install the package
 install_package() {
     log_info "Installing $MODULE_NAME..."
     
     # Add installation steps here
     # Example:
-    # if ! $SUDO_CMD apt-get update; then
-    #     log_error "Failed to update package lists"
-    #     return 1
-    # fi
-    #
-    # if ! $SUDO_CMD apt-get install -y "$PACKAGE_NAME"; then
+    # if ! sudo_exec apt-get install -y "$PACKAGE_NAME"; then
     #     log_error "Failed to install $PACKAGE_NAME"
     #     return 1
     # fi
@@ -93,7 +108,7 @@ configure_package() {
     # local config_file="/etc/package/config"
     # if [ -f "$config_file" ]; then
     #     backup_file "$config_file"
-    #     if ! $SUDO_CMD cp "./config/default.conf" "$config_file"; then
+    #     if ! sudo_exec cp "./config/default.conf" "$config_file"; then
     #         log_error "Failed to configure $MODULE_NAME"
     #         return 1
     #     fi
@@ -112,6 +127,11 @@ verify_installation() {
     fi
     
     # Add additional verification steps here
+    # Example:
+    # if ! sudo_exec systemctl is-active --quiet service-name; then
+    #     log_error "Service is not running"
+    #     return 1
+    # fi
     
     return 0
 }
@@ -119,6 +139,12 @@ verify_installation() {
 # Main installation function
 main() {
     log_info "Beginning $MODULE_NAME installation..."
+    
+    # Check if already installed
+    if command_exists "$PACKAGE_NAME"; then
+        log_warn "$MODULE_NAME is already installed"
+        return 0
+    fi
     
     # Check system compatibility
     if ! check_system_compatibility; then
@@ -129,6 +155,12 @@ main() {
     # Check dependencies
     if ! check_dependencies; then
         log_error "Dependency check failed"
+        exit 1
+    fi
+    
+    # Install dependencies
+    if ! install_dependencies; then
+        log_error "Failed to install dependencies"
         exit 1
     fi
     
@@ -149,7 +181,7 @@ main() {
         exit 1
     fi
     
-    log_success "$MODULE_NAME installation completed successfully"
+    log_info "$MODULE_NAME installation completed successfully"
 }
 
 # Run main function

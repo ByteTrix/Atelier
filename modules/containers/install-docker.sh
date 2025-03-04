@@ -26,6 +26,9 @@ readonly DOCKER_REPOSITORY="https://download.docker.com/linux/ubuntu"
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/../../lib/utils.sh"
 
+# Initialize sudo session at the start
+init_sudo_session
+
 # Check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
@@ -68,31 +71,31 @@ setup_repository() {
     log_info "Setting up Docker repository..."
     
     # Install required packages
-    sudo apt-get update
-    sudo apt-get install -y \
+    sudo_exec apt-get update
+    sudo_exec apt-get install -y \
         ca-certificates \
         curl \
         gnupg \
         lsb-release
     
     # Create directory for keyrings
-    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo_exec install -m 0755 -d /etc/apt/keyrings
     
     # Download and add Docker's official GPG key
     curl -fsSL "$DOCKER_GPG_KEY_URL" | \
-        sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo_exec gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    sudo_exec chmod a+r /etc/apt/keyrings/docker.gpg
     
     # Add Docker repository
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
         $DOCKER_REPOSITORY \
         $(lsb_release -cs) stable" | \
-        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo_exec tee /etc/apt/sources.list.d/docker.list > /dev/null
     
     # Update package index
-    sudo apt-get update
+    sudo_exec apt-get update
 }
 
 # Install Docker packages
@@ -100,7 +103,7 @@ install_docker() {
     log_info "Installing Docker Engine..."
     
     # Install Docker packages
-    if ! sudo apt-get install -y \
+    if ! sudo_exec apt-get install -y \
         docker-ce \
         docker-ce-cli \
         containerd.io \
@@ -118,13 +121,13 @@ configure_docker() {
     log_info "Configuring Docker..."
     
     # Enable Docker service
-    if ! sudo systemctl enable --now docker; then
+    if ! sudo_exec systemctl enable --now docker; then
         log_error "Failed to enable Docker service"
         return 1
     fi
     
     # Add user to docker group
-    if ! sudo usermod -aG docker "$USER"; then
+    if ! sudo_exec usermod -aG docker "$USER"; then
         log_warn "Failed to add user to docker group"
         log_warn "You may need to use sudo with docker commands"
     fi
@@ -146,7 +149,7 @@ verify_installation() {
     fi
     
     # Check Docker service
-    if ! sudo systemctl is-active --quiet docker; then
+    if ! sudo_exec systemctl is-active --quiet docker; then
         log_error "Docker service is not running"
         return 1
     fi

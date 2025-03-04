@@ -25,16 +25,13 @@ set -euo pipefail
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/lib/utils.sh"
 
+# Initialize sudo session at the start
+init_sudo_session
+
 # Configuration
 readonly MAX_LOG_AGE=30 # days
 readonly MAX_JOURNAL_SIZE="500M"
 readonly BACKUP_DIR="${HOME}/.cache/setupr/cleanup_backup"
-
-# Determine sudo command based on environment
-SUDO_CMD="sudo"
-if [[ "${SETUPR_SUDO:-0}" == "1" ]]; then
-    SUDO_CMD="sudo_exec"
-fi
 
 # Get size of directory
 get_size() {
@@ -64,25 +61,25 @@ clean_package_cache() {
     before_size=$(get_size /var/cache/apt/archives)
     
     # Update package list and clean cache
-    if ! $SUDO_CMD apt-get update >/dev/null; then
+    if ! sudo_exec apt-get update >/dev/null; then
         log_warn "Failed to update package lists"
     fi
     
-    if ! $SUDO_CMD apt-get clean; then
+    if ! sudo_exec apt-get clean; then
         log_warn "Failed to clean apt cache"
     fi
     
-    if ! $SUDO_CMD apt-get autoremove -y; then
+    if ! sudo_exec apt-get autoremove -y; then
         log_warn "Failed to remove unused packages"
     fi
     
-    if ! $SUDO_CMD apt-get autoclean; then
+    if ! sudo_exec apt-get autoclean; then
         log_warn "Failed to auto-clean package cache"
     fi
     
     local after_size
     after_size=$(get_size /var/cache/apt/archives)
-    log_success "Package cache cleanup complete (Before: $before_size, After: $after_size)"
+    log_info "Package cache cleanup complete (Before: $before_size, After: $after_size)"
 }
 
 # Clean temporary files
@@ -93,13 +90,13 @@ clean_temp_files() {
     
     # Clean /tmp with safety checks
     if [ -d "/tmp" ]; then
-        $SUDO_CMD find /tmp -type f -atime +1 -delete 2>/dev/null || \
+        sudo_exec find /tmp -type f -atime +1 -delete 2>/dev/null || \
             log_warn "Failed to clean some temporary files"
     fi
     
     local after_size
     after_size=$(get_size /tmp)
-    log_success "Temporary files cleanup complete (Before: $before_size, After: $after_size)"
+    log_info "Temporary files cleanup complete (Before: $before_size, After: $after_size)"
 }
 
 # Clean user cache
@@ -125,7 +122,7 @@ clean_user_cache() {
     
     local after_size
     after_size=$(get_size "$cache_dir")
-    log_success "User cache cleanup complete (Before: $before_size, After: $after_size)"
+    log_info "User cache cleanup complete (Before: $before_size, After: $after_size)"
 }
 
 # Clean system journals
@@ -134,19 +131,19 @@ clean_system_journals() {
     
     if command -v journalctl >/dev/null 2>&1; then
         # Vacuum journal files
-        if ! $SUDO_CMD journalctl --vacuum-time="${MAX_LOG_AGE}d" --vacuum-size="$MAX_JOURNAL_SIZE"; then
+        if ! sudo_exec journalctl --vacuum-time="${MAX_LOG_AGE}d" --vacuum-size="$MAX_JOURNAL_SIZE"; then
             log_warn "Failed to vacuum system journals"
         fi
         
         # Rotate and clean logs
-        if ! $SUDO_CMD logrotate -f /etc/logrotate.conf; then
+        if ! sudo_exec logrotate -f /etc/logrotate.conf; then
             log_warn "Failed to rotate system logs"
         fi
     else
         log_warn "journalctl not found, skipping journal cleanup"
     fi
     
-    log_success "System journal cleanup complete"
+    log_info "System journal cleanup complete"
 }
 
 # Clean old log files
@@ -156,27 +153,21 @@ clean_log_files() {
     before_size=$(get_size /var/log)
     
     # Find and remove old log files
-    $SUDO_CMD find /var/log -type f -name "*.log.*" -mtime +$MAX_LOG_AGE -delete 2>/dev/null || \
+    sudo_exec find /var/log -type f -name "*.log.*" -mtime +$MAX_LOG_AGE -delete 2>/dev/null || \
         log_warn "Failed to clean some old log files"
     
     # Compress current logs
-    $SUDO_CMD find /var/log -type f -name "*.log" -exec gzip -f {} \; 2>/dev/null || \
+    sudo_exec find /var/log -type f -name "*.log" -exec gzip -f {} \; 2>/dev/null || \
         log_warn "Failed to compress some log files"
     
     local after_size
     after_size=$(get_size /var/log)
-    log_success "Log files cleanup complete (Before: $before_size, After: $after_size)"
+    log_info "Log files cleanup complete (Before: $before_size, After: $after_size)"
 }
 
 # Main cleanup function
 main() {
     log_info "Starting system cleanup..."
-    
-    # Ensure proper permissions
-    if [ "$EUID" -ne 0 ] && [ -z "${SUDO_USER:-}" ]; then
-        log_error "This script must be run with sudo"
-        exit 1
-    fi
     
     # Create backup directory
     mkdir -p "$BACKUP_DIR"
@@ -188,7 +179,7 @@ main() {
     clean_system_journals
     clean_log_files
     
-    log_success "System cleanup completed successfully!"
+    log_info "System cleanup completed successfully!"
     log_info "Backups stored in: $BACKUP_DIR"
 }
 
