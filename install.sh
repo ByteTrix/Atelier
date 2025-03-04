@@ -107,7 +107,7 @@ fi
 
 # Clear screen and show welcome
 clear
-print_logo
+
 
 # Initialize sudo if needed (will be skipped if already in sudo context)
 init_sudo_session
