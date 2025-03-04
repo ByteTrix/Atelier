@@ -1,39 +1,60 @@
 #!/usr/bin/env bash
+#
+# CLI Tools Installation Menu
+# -------------------------
+# Interactive menu for installing command-line tools and utilities
+#
+# Author: Atelier Team
+# License: MIT
+
 set -euo pipefail
 
-DIR="$(dirname "$(realpath "$0")")"
-source "$DIR/../../lib/utils.sh"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-log_info "[cli/menu] Launching CLI tools installation menu using Gum..."
+log_info "[cli] Initializing CLI tools installation menu..."
 
-declare -A options=(
-  ["Fzf (Fuzzy Finder)"]="install-fzf.sh"
-  ["Ripgrep (Fast text search)"]="install-ripgrep.sh"
-  ["Fd (Improved file search)"]="install-fd.sh"
-  ["Bat (Enhanced cat)"]="install-bat.sh"
-  ["Eza [exa] (Modern ls)"]="install-exa.sh"
-  ["Zoxide (Enhanced cd)"]="install-zoxide.sh"
-  ["Ag (The Silver Searcher)"]="install-ag.sh"
-  ["Tig (Git TUI)"]="install-tig.sh"
-  ["Ncdu (Disk usage analyzer)"]="install-ncdu.sh"
-  ["Tree (Directory tree view)"]="install-tree.sh"
-  ["LSD (Modern ls alternative)"]="install-lsd.sh"
-  ["Gum (Interactive UI)"]="install-gum.sh"
+# Define available CLI tool options with descriptions
+declare -A CLI_OPTIONS=(
+  ["Fzf (Fuzzy finder for command line)"]="install-fzf.sh"
+  ["Ripgrep (Fast regex-based search tool)"]="install-ripgrep.sh"
+  ["Fd (Modern alternative to find)"]="install-fd.sh"
+  ["Bat (Cat clone with syntax highlighting)"]="install-bat.sh"
+  ["Eza [exa] (Modern replacement for ls)"]="install-exa.sh"
+  ["Zoxide (Smarter cd command with tracking)"]="install-zoxide.sh"
+  ["Ag (The Silver Searcher code search)"]="install-ag.sh"
+  ["Tig (Text interface for Git)"]="install-tig.sh"
+  ["Ncdu (Disk usage analyzer with ncurses)"]="install-ncdu.sh"
+  ["Tree (Directory listing as tree)"]="install-tree.sh"
+  ["LSD (LSDeluxe, modern ls alternative)"]="install-lsd.sh"
+  ["Gum (Stylish shell script UI toolkit)"]="install-gum.sh"
+  ["Ghostty (Modern GPU-accelerated terminal)"]="install-ghostty.sh"
 )
 
-descriptions=("${!options[@]}")
+CLI_DESCRIPTIONS=("${!CLI_OPTIONS[@]}")
 
-selected=$(gum choose --no-limit --header "CLI Tools" \
-  --header "Select CLI tools to install:" "${descriptions[@]}")
+# Display interactive selection menu
+log_info "[cli] Displaying CLI tools selection menu..."
+SELECTED_TOOLS=$(gum choose \
+  --no-limit \
+  --height 20 \
+  --header "🔧 Command Line Tools Installation" \
+  --header.foreground="99" \
+  --header "Select CLI tools to install (space to select, enter to confirm):" \
+  "${CLI_DESCRIPTIONS[@]}")
 
-if [ -z "$selected" ]; then
-  log_warn "[cli/menu] No CLI tools selected; skipping."
+# Handle empty selection
+if [ -z "$SELECTED_TOOLS" ]; then
+  log_warn "[cli] No CLI tools selected; skipping installation."
   exit 0
 fi
 
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[cli/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
-log_info "[cli/menu] CLI tools installation complete."
+# Process selected options
+log_info "[cli] Processing selected CLI tool installations..."
+while IFS= read -r SELECTION; do
+  SCRIPT="${CLI_OPTIONS[$SELECTION]}"
+  log_info "[cli] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
+done <<< "$SELECTED_TOOLS"
+
+log_info "[cli] CLI tools selection complete."

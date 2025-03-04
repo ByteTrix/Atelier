@@ -1,30 +1,51 @@
 #!/usr/bin/env bash
+#
+# Web Browsers Installation Menu
+# ---------------------------
+# Interactive menu for installing web browsers
+#
+# Author: Atelier Team
+# License: MIT
+
 set -euo pipefail
 
-DIR="$(dirname "$(realpath "$0")")"
-source "$DIR/../../lib/utils.sh"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-log_info "[browsers/menu] Launching browsers installation menu using Gum..."
+log_info "[browsers] Initializing web browsers installation menu..."
 
-declare -A options=(
-  ["Google Chrome"]="install-chrome.sh"
-  ["Firefox"]="install-firefox.sh"
-  ["Brave Browser"]="install-brave.sh"
+# Define available browser options with descriptions
+declare -A BROWSER_OPTIONS=(
+  ["Google Chrome (Fast, popular browser)"]="install-chrome.sh"
+  ["Firefox (Privacy-focused browser)"]="install-firefox.sh"
+  ["Brave Browser (Privacy-first, ad-blocking)"]="install-brave.sh"
+  ["Zen Browser (Minimalist, distraction-free)"]="install-zen.sh"
 )
 
-descriptions=("${!options[@]}")
+BROWSER_DESCRIPTIONS=("${!BROWSER_OPTIONS[@]}")
 
-selected=$(gum choose --no-limit --header "Web Browsers" \
-  --header "Select web browsers to install:" "${descriptions[@]}")
+# Display interactive selection menu
+log_info "[browsers] Displaying browser selection menu..."
+SELECTED_BROWSERS=$(gum choose \
+  --no-limit \
+  --height 15 \
+  --header "🌐 Web Browsers Installation" \
+  --header.foreground="99" \
+  --header "Select browsers to install (space to select, enter to confirm):" \
+  "${BROWSER_DESCRIPTIONS[@]}")
 
-if [ -z "$selected" ]; then
-  log_warn "[browsers/menu] No browsers selected; skipping."
+# Handle empty selection
+if [ -z "$SELECTED_BROWSERS" ]; then
+  log_warn "[browsers] No browsers selected; skipping installation."
   exit 0
 fi
 
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[browsers/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
-log_info "[browsers/menu] Browser installation complete."
+# Process selected options
+log_info "[browsers] Processing selected browser installations..."
+while IFS= read -r SELECTION; do
+  SCRIPT="${BROWSER_OPTIONS[$SELECTION]}"
+  log_info "[browsers] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
+done <<< "$SELECTED_BROWSERS"
+
+log_info "[browsers] Browser selection complete."

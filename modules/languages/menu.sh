@@ -1,36 +1,56 @@
 #!/usr/bin/env bash
+#
+# Programming Languages Installation Menu
+# --------------------------------------
+# Interactive menu for installing various programming languages
+# and their associated package managers.
+#
+# Author: Atelier Team
+# License: MIT
+
 set -euo pipefail
 
-# Determine the directory of the current script.
-DIR="$(dirname "$(realpath "$0")")"
-# Source shared utilities.
-source "$DIR/../../lib/utils.sh"
+# Determine the directory of the current script
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+# Source shared utilities
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-log_info "[languages/menu] Launching language installation menu using Gum..."
+log_info "[languages] Initializing language installation menu..."
 
-# Define an associative array mapping descriptions to script filenames.
-declare -A options=(
-  ["Python 3 & pip"]="install-python.sh"
-  ["Node.js & npm"]="install-node.sh"
-  ["Ruby & Bundler"]="install-ruby.sh"
-  ["Golang"]="install-go.sh"
-  ["Rust (via rustup)"]="install-rust.sh"
+# Define available language options with descriptions and installation scripts
+declare -A LANGUAGE_OPTIONS=(
+  ["Python 3 & pip (Fast, versatile language)"]="install-python.sh"
+  ["Node.js & npm (JavaScript runtime)"]="install-node.sh"
+  ["Ruby & Bundler (Elegant language)"]="install-ruby.sh"
+  ["Golang (Fast, statically typed language)"]="install-go.sh"
+  ["Rust (Memory-safe systems language)"]="install-rust.sh"
 )
 
-# Create an array of descriptions.
-descriptions=("${!options[@]}")
+# Extract descriptions for gum menu
+LANGUAGE_DESCRIPTIONS=("${!LANGUAGE_OPTIONS[@]}")
 
-# Use Gum's choose command with --no-limit and --header.
-selected=$(gum choose --no-limit --header "Select language installers to run:" "${descriptions[@]}")
+# Display interactive selection menu with clear instructions
+log_info "[languages] Displaying language selection menu..."
+SELECTED_LANGUAGES=$(gum choose \
+  --no-limit \
+  --height 15 \
+  --header "💻 Programming Language Installation" \
+  --header.foreground="99" \
+  --header "Select languages to install (space to select, enter to confirm):" \
+  "${LANGUAGE_DESCRIPTIONS[@]}")
 
-if [ -z "$selected" ]; then
-  log_warn "[languages/menu] No selection made; skipping language installation."
+# Handle empty selection gracefully
+if [ -z "$SELECTED_LANGUAGES" ]; then
+  log_warn "[languages] No languages selected; skipping installation."
   exit 0
 fi
 
-# For each selected description, output the full path of the corresponding script.
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[languages/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
+# Process selected options
+log_info "[languages] Processing selected language installations..."
+while IFS= read -r SELECTION; do
+  SCRIPT="${LANGUAGE_OPTIONS[$SELECTION]}"
+  log_info "[languages] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
+done <<< "$SELECTED_LANGUAGES"
+
+log_info "[languages] Language selection complete."

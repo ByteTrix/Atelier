@@ -1,29 +1,49 @@
 #!/usr/bin/env bash
+#
+# System Configuration Menu
+# -----------------------
+# Interactive menu for system configuration tasks
+#
+# Author: Atelier Team
+# License: MIT
+
 set -euo pipefail
 
-DIR="$(dirname "$(realpath "$0")")"
-source "$DIR/../../lib/utils.sh"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-log_info "[config/menu] Launching system configuration menu using Gum..."
+log_info "[config] Initializing system configuration menu..."
 
-declare -A options=(
-  ["Setup Dotfiles (Beta)"]="setup-dotfiles.sh"
-  ["Configure VS Code Keyring"]="configure-vscode-keyring.sh"
+# Define available configuration options with descriptions
+declare -A CONFIG_OPTIONS=(
+  ["Setup Dotfiles (Configure shell and environment)"]="setup-dotfiles.sh"
+  ["Configure VS Code Keyring (Secure credential storage)"]="configure-vscode-keyring.sh"
 )
 
-descriptions=("${!options[@]}")
+CONFIG_DESCRIPTIONS=("${!CONFIG_OPTIONS[@]}")
 
-selected=$(gum choose --no-limit --header "System Configuration" \
-  --header "Select configuration tasks to perform:" "${descriptions[@]}")
+# Display interactive selection menu
+log_info "[config] Displaying configuration tasks menu..."
+SELECTED_CONFIGS=$(gum choose \
+  --no-limit \
+  --height 15 \
+  --header "⚙️ System Configuration" \
+  --header.foreground="99" \
+  --header "Select configuration tasks to perform (space to select, enter to confirm):" \
+  "${CONFIG_DESCRIPTIONS[@]}")
 
-if [ -z "$selected" ]; then
-  log_warn "[config/menu] No configuration tasks selected; skipping."
+# Handle empty selection
+if [ -z "$SELECTED_CONFIGS" ]; then
+  log_warn "[config] No configuration tasks selected; skipping."
   exit 0
 fi
 
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[config/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
-log_info "[config/menu] Configuration tasks complete."
+# Process selected options
+log_info "[config] Processing selected configuration tasks..."
+while IFS= read -r SELECTION; do
+  SCRIPT="${CONFIG_OPTIONS[$SELECTION]}"
+  log_info "[config] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
+done <<< "$SELECTED_CONFIGS"
+
+log_info "[config] Configuration selection complete."

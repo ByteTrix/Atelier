@@ -1,31 +1,51 @@
 #!/usr/bin/env bash
+#
+# IDE & Code Editor Installation Menu
+# ---------------------------------
+# Interactive menu for installing popular IDEs and code editors
+#
+# Author: Atelier Team
+# License: MIT
+
 set -euo pipefail
 
-DIR="$(dirname "$(realpath "$0")")"
-source "$DIR/../../lib/utils.sh"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-log_info "[ides/menu] Launching IDEs installation menu using Gum..."
+log_info "[ides] Initializing IDE installation menu..."
 
-declare -A options=(
-  ["Visual Studio Code"]="install-vscode.sh"
-  ["IntelliJ IDEA CE"]="install-intellij.sh"
-  ["GNU Emacs"]="install-emacs.sh"
-  ["Geany IDE"]="install-geany.sh"
+# Define available IDE options with descriptions
+declare -A IDE_OPTIONS=(
+  ["Visual Studio Code (Modern, extensible editor)"]="install-vscode.sh"
+  ["IntelliJ IDEA CE (Java & JVM languages IDE)"]="install-intellij.sh"
+  ["GNU Emacs (Extensible, customizable editor)"]="install-emacs.sh"
+  ["Geany IDE (Lightweight, fast IDE)"]="install-geany.sh"
 )
 
-descriptions=("${!options[@]}")
+IDE_DESCRIPTIONS=("${!IDE_OPTIONS[@]}")
 
-selected=$(gum choose --no-limit --header "IDEs & Editors" \
-  --header "Select IDEs to install:" "${descriptions[@]}")
+# Display interactive selection menu
+log_info "[ides] Displaying IDE selection menu..."
+SELECTED_IDES=$(gum choose \
+  --no-limit \
+  --height 15 \
+  --header "🖥️ IDE & Code Editor Installation" \
+  --header.foreground="99" \
+  --header "Select IDEs to install (space to select, enter to confirm):" \
+  "${IDE_DESCRIPTIONS[@]}")
 
-if [ -z "$selected" ]; then
-  log_warn "[ides/menu] No IDEs selected; skipping."
+# Handle empty selection
+if [ -z "$SELECTED_IDES" ]; then
+  log_warn "[ides] No IDEs selected; skipping installation."
   exit 0
 fi
 
-while IFS= read -r desc; do
-  script="${options[$desc]}"
-  log_info "[ides/menu] Selected: $desc -> $script"
-  echo "$DIR/$script"
-done <<< "$selected"
-log_info "[ides/menu] IDE installation complete."
+# Process selected options
+log_info "[ides] Processing selected IDE installations..."
+while IFS= read -r SELECTION; do
+  SCRIPT="${IDE_OPTIONS[$SELECTION]}"
+  log_info "[ides] Queuing: $SELECTION"
+  echo "${SCRIPT_DIR}/${SCRIPT}"
+done <<< "$SELECTED_IDES"
+
+log_info "[ides] IDE selection complete."
