@@ -20,8 +20,12 @@
   - CLI Tools (zoxide, fzf, ripgrep, etc.)
   - Containers (Docker, kubectl)
   - Browsers (Chrome, Firefox, Brave)
-  - Productivity Apps
+  - Productivity Apps (Notion, Obsidian, VLC, Xournal++, Localsend, WhatsApp, Spotify, Dropbox, Todoist, Telegram, Ulauncher, Syncthing)
   - Development Tools
+
+- ⚡ **Enhanced Installation Experience**:
+  - Parallel execution and progress tracking for installations
+  - Interactive menus with more options for users
 
 ## Quick Start
 
@@ -108,6 +112,20 @@ Configurations are saved as JSON files:
 - Google Chrome
 - Firefox
 - Brave Browser
+
+### Productivity Apps
+- Notion (All-in-one workspace)
+- Obsidian (Knowledge base & notes)
+- VLC Media Player (Versatile media player)
+- Xournal++ (Note taking & PDF annotation)
+- Localsend (Local network file sharing)
+- WhatsApp (Messaging client)
+- Spotify (Music streaming)
+- Dropbox (Cloud storage & sync)
+- Todoist (Task management)
+- Telegram (Secure messaging)
+- Ulauncher (Application launcher)
+- Syncthing (Decentralized file sync)
 
 ### Additional Tools
 - Git configurations

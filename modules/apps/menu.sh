@@ -28,6 +28,12 @@ declare -A APP_OPTIONS=(
   ["Telegram (Secure messaging)"]="install-telegram.sh"
   ["Ulauncher (Application launcher)"]="install-ulauncher.sh"
   ["Syncthing (Decentralized file sync)"]="install-syncthing.sh"
+  ["Slack (Team collaboration and communication)"]="install-slack.sh"
+  ["Discord (Voice, video, and text chat)"]="install-discord.sh"
+  ["Postman (API development environment)"]="install-postman.sh"
+  ["Zoom (Video conferencing)"]="install-zoom.sh"
+  ["Joplin (Note taking and to-do application)"]="install-joplin.sh"
+  ["Bitwarden (Password manager)"]="install-bitwarden.sh"
 )
 
 APP_DESCRIPTIONS=("${!APP_OPTIONS[@]}")
