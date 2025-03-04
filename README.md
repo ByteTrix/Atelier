@@ -1,5 +1,12 @@
 # Setupr
 
+## To-Do
+
+ -check docker-compose file
+ -copy omakub code for most application or copy his module-template
+ -3rd option create config not creating the file
+ -Test all the istallation
+
 ![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/main/.github/assets/banner.png)
 
 ## Features
