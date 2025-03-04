@@ -163,7 +163,8 @@ MODES=(
   "📂 Use Saved Configuration (Load previous selections)"
 )
 
-MODE=$(gum choose --cursor.foreground="212" --selected.foreground="212" --header="Select installation mode:" "${MODES[@]}")
+MODE=$(gum choose --cursor.foreground="212" --selected.foreground="212" \
+  --header="Select installation mode:" "${MODES[@]}")
 
 print_section "Processing"
 
@@ -172,15 +173,15 @@ declare -a VERIFIED_SCRIPTS=()
 
 case "$MODE" in
   "🚀 Auto Install"*)
-    echo '{"mode": "Auto Install"}' | jq -s '.[0] * input' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+    echo '{"mode": "Auto Install", "packages": []}' > "$CONFIG_TEMP"
+    
     if [ -f "${SCRIPT_DIR}/recommended-config.json" ]; then
       gum style --foreground 99 "📦 Loading recommended configuration..."
+      cp "${SCRIPT_DIR}/recommended-config.json" "$CONFIG_TEMP"
       
-      jq -r '.selections | to_entries | .[] | .key as $category | .value | to_entries | .[] | $category + "/" + .key' \
-        "${SCRIPT_DIR}/recommended-config.json" | while read -r package; do
-          add_script_to_temp "$package"
-          jq --arg pkg "$package" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
-      done
+      while IFS= read -r package; do
+        add_script_to_temp "$package"
+      done < <(jq -r '.packages[]' "$CONFIG_TEMP")
     else
       log_error "Recommended configuration file not found!"
       exit 1

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-ascii_art=' 
+# ASCII art for Setupr logo
+ascii_art='
 
 ███████╗███████╗████████╗██╗   ██╗██████╗ ██████╗ 
 ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔══██╗
@@ -21,46 +22,59 @@ elif [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Set up installation directory
+INSTALL_DIR="/usr/local/share/Setupr"
+USER_HOME=$(eval echo ~${SUDO_USER})
+
 echo -e "$ascii_art"
 echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
 echo -e "\nBegin installation (or abort with ctrl+c)..."
 
-# Install git if not present
-# Set up installation directory
-INSTALL_DIR="/usr/local/share/Setupr"
-
-# Only clone if directory doesn't exist or is empty
+# Clone or update repository
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone -b upgrage https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"
+    git clone -b upgrade https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+        echo "Error: Failed to clone repository"
+        exit 1
+    }
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    git pull origin upgrage
+    git pull origin upgrade || {
+        echo "Error: Failed to update repository"
+        exit 1
+    }
     cd - >/dev/null
 fi
 
+# Switch to specified branch if not master
 if [[ "${Setupr_REF:-master}" != "master" ]]; then
-  cd "$INSTALL_DIR"
-  git fetch origin "${Setupr_REF:-stable}" && git checkout "${Setupr_REF:-stable}"
-  cd - >/dev/null
+    cd "$INSTALL_DIR"
+    git fetch origin "${Setupr_REF:-stable}" && git checkout "${Setupr_REF:-stable}" || {
+        echo "Error: Failed to switch to branch ${Setupr_REF:-stable}"
+        exit 1
+    }
+    cd - >/dev/null
 fi
 
+# Make scripts executable and set permissions
+chmod +x "$INSTALL_DIR"/{install,check-version,system-update}.sh
+chmod +x "$INSTALL_DIR"/modules/*/*.sh
+chown -R ${SUDO_USER}:${SUDO_USER} "$INSTALL_DIR"
+
 # Ensure proper permissions for user configs
-USER_HOME=$(eval echo ~${SUDO_USER})
 mkdir -p "${USER_HOME}/Downloads"
 chown -R ${SUDO_USER}:${SUDO_USER} "${USER_HOME}/Downloads"
 
-# Make scripts executable
-chmod +x "$INSTALL_DIR/install.sh"
-chmod +x "$INSTALL_DIR/check-version.sh"
-chmod +x "$INSTALL_DIR"/modules/*/*.sh
+# Source utility functions
+source "${INSTALL_DIR}/lib/utils.sh"
 
-# Set proper ownership
-chown -R ${SUDO_USER}:${SUDO_USER} "$INSTALL_DIR"
+# Run system update
+log_info "Running system update before installation..."
+"$INSTALL_DIR/system-update.sh"
 
-echo "Installation starting..."
+log_info "Starting Setupr installation..."
 
 # Run install.sh with preserved environment variables
 HOME="$USER_HOME" \
