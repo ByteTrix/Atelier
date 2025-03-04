@@ -1,22 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Define the installation directory.
-INSTALL_DIR="${HOME}/.local/share/atelier"
+# Get script directory for portable installation
+INSTALL_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 
 # Source shared utilities.
-source "${INSTALL_DIR}/lib/utils.sh"
-
-# Ensure the script is run with sudo.
-if [[ $EUID -ne 0 ]]; then
-  log_error "Please run this script with sudo."
+# Source shared utilities from lib directory
+if [ -f "${INSTALL_DIR}/lib/utils.sh" ]; then
+  source "${INSTALL_DIR}/lib/utils.sh"
+else
+  echo "ERROR: utils.sh not found!" >&2
   exit 1
 fi
+
+# Check for necessary permissions
+if ! touch "${INSTALL_DIR}/test.permissions" 2>/dev/null; then
+  log_error "Missing write permissions in installation directory"
+  exit 1
+fi
+rm -f "${INSTALL_DIR}/test.permissions"
 
 log_info "Starting Atelier installer..."
 
 # Check distribution version.
-source "${INSTALL_DIR}/check-version.sh"
+source "./check-version.sh"
 
 # Determine if we're running GNOME.
 RUNNING_GNOME=$([[ "$XDG_CURRENT_DESKTOP" == *"GNOME"* ]] && echo true || echo false)
@@ -45,40 +52,90 @@ log_info "Selected mode: $mode"
 if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   log_info "Running Automatic Installation..."
 
-  # Run common scripts with default settings.
-  bash "${INSTALL_DIR}/flatpak-setup.sh"
+  # Enhanced installation with parallel execution and progress tracking
+  declare -A INSTALL_STEPS=(
+    ["Flatpak Setup"]="flatpak-setup.sh"
+    ["Python Runtime"]="modules/languages/install-python.sh"
+    ["Node.js Runtime"]="modules/languages/install-node.sh"
+    ["VS Code IDE"]="modules/ides/install-vscode.sh"
+    ["Chrome Browser"]="modules/browsers/install-chrome.sh"
+    ["Brave Browser"]="modules/browsers/install-brave.sh"
+    ["Productivity Apps"]="modules/apps/install-*.sh"
+    ["Docker Engine"]="modules/containers/install-docker.sh"
+    ["System Config"]="modules/config/setup-dotfiles.sh"
+    ["GNOME Theme"]="modules/theme/install-gnome-theme.sh"
+  )
 
-  # Install default language runtimes.
-  bash "${INSTALL_DIR}/modules/languages/install-python.sh"
-  bash "${INSTALL_DIR}/modules/languages/install-node.sh"
+  # Run installations in parallel with error handling
+  log_info "Starting parallel installations..."
+  gum spin --spinner dot --title "Preparing..." -- sleep 1
 
-  # Install default IDE (Visual Studio Code).
-  bash "${INSTALL_DIR}/modules/ides/install-vscode.sh"
+  for step in "${!INSTALL_STEPS[@]}"; do
+    (
+      script="${INSTALL_DIR}/${INSTALL_STEPS[$step]}"
+      if [[ $script == *"*.sh" ]]; then
+        # Handle wildcard expansions
+        for f in $script; do
+          log_info "Installing ${f##*/}..."
+          if ! bash "$f"; then
+            log_error "Failed to install ${f##*/}"
+            exit 1
+          fi
+        done
+      else
+        log_info "Installing $step..."
+        if ! bash "$script"; then
+          log_error "Failed to install $step"
+          exit 1
+        fi
+      fi
+    ) &> >(gum format -t template "{{ Italic }}» {{ . }} {{- /}}" >> "${INSTALL_DIR}/install.log") &
+  done
 
-  # Install default browsers.
-  bash "${INSTALL_DIR}/modules/browsers/install-chrome.sh"
-  bash "${INSTALL_DIR}/modules/browsers/install-brave.sh"
+  # Show progress bar while installations run
+  gum spin --spinner line --title "Installing components..." -- \
+    bash -c 'while ps -p $(jobs -p) >/dev/null 2>&1; do sleep 1; done'
 
-  # Install selected productivity/collaboration apps.
-  bash "${INSTALL_DIR}/modules/apps/install-notion.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-obsidian.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-vlc.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-xournal.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-localsend.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-whatsapp.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-spotify.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-telegram.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-ulauncher.sh"
-  bash "${INSTALL_DIR}/modules/apps/install-syncthing.sh"
-
-  # Install Docker.
-  bash "${INSTALL_DIR}/modules/containers/install-docker.sh"
-
-  # Setup dotfiles and GNOME theme.
-  bash "${INSTALL_DIR}/modules/config/setup-dotfiles.sh"
-  bash "${INSTALL_DIR}/modules/theme/install-gnome-theme.sh"
-
+  # Final system cleanup
   bash "${INSTALL_DIR}/system-cleanup.sh"
+
+  # Generate installation report
+  log_info "Generating installation report..."
+  {
+    echo "Successful installations:"
+    grep "INFO: Installed" "${INSTALL_DIR}/install.log" || true
+    echo -e "\nWarnings:"
+    grep "WARN:" "${INSTALL_DIR}/install.log" || true
+    echo -e "\nErrors:"
+    grep "ERROR:" "${INSTALL_DIR}/install.log" || true
+  } | gum format > "${INSTALL_DIR}/installation-report.txt"
+
+  # Show final status with improved formatting
+  if gum confirm "Show detailed installation report?" --affirmative="Show" --negative="Skip"; then
+    gum style --border rounded --padding "1 2" --border-foreground 212 < "${INSTALL_DIR}/installation-report.txt" | \
+    gum pager
+  fi
+
+  # Add post-install checks
+  log_info "Running post-installation verification..."
+  gum spin --spinner moon --title "Verifying installations..." -- \
+    bash -c '
+      declare -A CHECKS=(
+        ["Python"]="python3 --version"
+        ["Node.js"]="node --version"
+        ["Docker"]="docker --version"
+        ["VS Code"]="code --version"
+      )
+
+      echo -e "Verification Results:\n" > "${INSTALL_DIR}/verification.txt"
+      for name in "${!CHECKS[@]}"; do
+        if ${CHECKS[$name]} &>/dev/null; then
+          echo "✅ $name" >> "${INSTALL_DIR}/verification.txt"
+        else
+          echo "❌ $name" >> "${INSTALL_DIR}/verification.txt"
+        fi
+      done
+    '
 
 elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   log_info "Running Advanced Installation..."
