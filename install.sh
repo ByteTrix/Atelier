@@ -5,8 +5,22 @@ set -euo pipefail
 INSTALL_DIR="/usr/local/share/Setupr"
 CONFIG_FILE="${INSTALL_DIR}/setupr-config.json"
 CONFIG_TEMP="/tmp/setupr_config_temp.json"
-DOWNLOADS_DIR="$HOME/Downloads"
+
+# Get actual user's home directory even when run as root
+if [ -n "${SUDO_USER:-}" ]; then
+    REAL_USER=$SUDO_USER
+    REAL_HOME=$(eval echo ~$SUDO_USER)
+else
+    REAL_USER=$USER
+    REAL_HOME=$HOME
+fi
+
+DOWNLOADS_DIR="${REAL_HOME}/Downloads"
 DEFAULT_SAVE_PATH="${DOWNLOADS_DIR}/setupr_config_$(date +%Y%m%d_%H%M%S).json"
+
+# Ensure Downloads directory exists with correct permissions
+mkdir -p "$DOWNLOADS_DIR"
+chown "${REAL_USER}:${REAL_USER}" "$DOWNLOADS_DIR"
 
 # Export INSTALL_DIR for child scripts
 export INSTALL_DIR
@@ -104,8 +118,9 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   # Move temp config to final location
   mv "$CONFIG_TEMP" "$CONFIG_FILE"
 
-  # Save config to Downloads
+  # Save config to Downloads with correct permissions
   cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
+  chown "${REAL_USER}:${REAL_USER}" "$DEFAULT_SAVE_PATH"
   log_info "Configuration saved to $DEFAULT_SAVE_PATH"
 
   # Display installation summary
@@ -228,8 +243,9 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   # Move temp config to final location
   mv "$CONFIG_TEMP" "$CONFIG_FILE"
 
-  # Save config to Downloads
+  # Save config to Downloads with correct permissions
   cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
+  chown "${REAL_USER}:${REAL_USER}" "$DEFAULT_SAVE_PATH"
   log_info "Configuration saved to $DEFAULT_SAVE_PATH"
 
   # Display installation summary
