@@ -49,9 +49,7 @@ log_info "Starting Setupr installer..."
 RUNNING_GNOME=$([[ "$XDG_CURRENT_DESKTOP" == *"GNOME"* ]] && echo true || echo false)
 
 if $RUNNING_GNOME; then
-  # Prevent sleep/lock during installation.
-  gsettings set org.gnome.desktop.screensaver lock-enabled false
-  gsettings set org.gnome.desktop.session idle-delay 0
+  log_info "Detected GNOME desktop environment"
   echo "Get ready to make a few choices..."
 fi
 
@@ -340,10 +338,6 @@ if $RUNNING_GNOME; then
     bash "${INSTALL_DIR}/modules/theme/configure-gnome-extensions.sh"
     bash "${INSTALL_DIR}/modules/theme/configure-gnome-settings.sh"
   fi
-
-  # Revert idle and lock settings.
-  gsettings set org.gnome.desktop.screensaver lock-enabled true
-  gsettings set org.gnome.desktop.session idle-delay 300
 fi
 
 log_info "Setupr installation complete! Please log out and log back in (or reboot) for all changes to take effect."
