@@ -52,4 +52,4 @@ chmod +x "$INSTALL_DIR/check-version.sh"
 chmod +x "$INSTALL_DIR"/modules/*/*.sh
 
 echo "Installation starting..."
-cd "$INSTALL_DIR" && ./install.sh
+cd "$INSTALL_DIR" && sudo bash install.sh
