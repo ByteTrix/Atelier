@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Get script directory and config paths
-INSTALL_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+# Set installation directory
+INSTALL_DIR="/usr/local/share/Setupr"
 CONFIG_FILE="${INSTALL_DIR}/setupr-config.json"
 CONFIG_TEMP="/tmp/setupr_config_temp.json"
 DOWNLOADS_DIR="$HOME/Downloads"
 DEFAULT_SAVE_PATH="${DOWNLOADS_DIR}/setupr_config_$(date +%Y%m%d_%H%M%S).json"
+
+# Export INSTALL_DIR for child scripts
+export INSTALL_DIR
 
 # Source shared utilities.
 if [ -f "${INSTALL_DIR}/lib/utils.sh" ]; then
@@ -26,7 +29,7 @@ rm -f "${INSTALL_DIR}/test.permissions"
 log_info "Starting Setupr installer..."
 
 # Check distribution version.
-source "./check-version.sh"
+"${INSTALL_DIR}/check-version.sh"
 
 # Determine if we're running GNOME.
 RUNNING_GNOME=$([[ "$XDG_CURRENT_DESKTOP" == *"GNOME"* ]] && echo true || echo false)

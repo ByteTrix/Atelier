@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
-source "${SCRIPT_DIR}/lib/utils.sh"
+INSTALL_DIR="/usr/local/share/Setupr"
+source "${INSTALL_DIR}/lib/utils.sh"
 
 log_info "Checking Ubuntu version..."
 REQUIRED_VERSION="24.04"
