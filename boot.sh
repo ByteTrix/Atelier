@@ -34,14 +34,14 @@ echo -e "\nBegin installation (or abort with ctrl+c)..."
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone -b upgrade https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+    git clone -b upgrage https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
         echo "Error: Failed to clone repository"
         exit 1
     }
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    git pull origin upgrade || {
+    git pull origin upgrage || {
         echo "Error: Failed to update repository"
         exit 1
     }
