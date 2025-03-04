@@ -1,7 +1,5 @@
 # Setupr
 
-Setupr is an opinionated Ubuntu developer setup tool that automates the installation of essential and commonly used developer tools. It features an intelligent configuration system that allows you to save, load, and share your setup preferences.
-
 ![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/main/.github/assets/banner.png)
 
 ## Features
