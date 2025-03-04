@@ -93,14 +93,6 @@ test_script_execution() {
   return 0
 }
 
-# ASCII art logo with color
-print_logo() {
-  gum style --foreground 212 --border-foreground 212 --border double --align center --width 50 --margin "1 2" \
-    "Setupr" \
-    "────────────" \
-    "Modern Development Environment"
-}
-
 # Print section header
 print_section() {
   gum style --foreground 99 --bold --margin "1 0" "$1"
