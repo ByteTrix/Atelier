@@ -32,4 +32,4 @@ if ! sudo apt autoremove -y && sudo apt clean; then
     log_warn "Cleanup encountered some issues but continuing..."
 fi
 
-log_success "System update completed successfully."
+log_info "System update completed successfully."
