@@ -273,6 +273,14 @@ else
 fi
 
 if $RUNNING_GNOME; then
+  # Ask about GNOME extensions and themes
+  if gum confirm "Would you like to install additional GNOME extensions and theme options?"; then
+    # Run GNOME extensions menu
+    bash "${INSTALL_DIR}/modules/theme/install-gnome-extensions.sh"
+    bash "${INSTALL_DIR}/modules/theme/configure-gnome-extensions.sh"
+    bash "${INSTALL_DIR}/modules/theme/configure-gnome-settings.sh"
+  fi
+
   # Revert idle and lock settings.
   gsettings set org.gnome.desktop.screensaver lock-enabled true
   gsettings set org.gnome.desktop.session idle-delay 300
