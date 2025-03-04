@@ -11,7 +11,7 @@ source "${SCRIPT_DIR}/../../lib/utils.sh"
 
 log_info "[apps] Initializing productivity apps installation menu..."
 
-# Define available options with descriptions
+# Define available options with descriptions and corresponding script filenames
 declare -A OPTIONS=(
     ["Telegram (Secure messaging)"]="install-telegram.sh"
     ["WhatsApp (Messaging client)"]="install-whatsapp.sh"
@@ -29,10 +29,10 @@ declare -A OPTIONS=(
     ["Zoom (Video conferencing)"]="install-zoom.sh"
 )
 
-# Get array of descriptions (keys)
+# Get array of descriptions (the keys of the OPTIONS array)
 DESCRIPTIONS=("${!OPTIONS[@]}")
 
-# Display menu and get selections
+# Display menu and capture the selections (multiple selection allowed)
 log_info "[apps] Displaying productivity apps selection menu..."
 SELECTED=$(gum choose --no-limit \
     --header "Select apps to install (space to select, enter to confirm):" \
@@ -44,12 +44,16 @@ if [ -z "$SELECTED" ]; then
   exit 0
 fi
 
-# Process and output selected script paths
+# Process and output the selected script paths
 log_info "[apps] Processing selected app installations..."
 while IFS= read -r SELECTION; do
   SCRIPT="${OPTIONS[$SELECTION]}"
-  log_info "[apps] Queuing: $SELECTION"
-  echo "${SCRIPT_DIR}/${SCRIPT}"
+  if [ -n "$SCRIPT" ]; then
+    log_info "[apps] Queuing: $SELECTION"
+    echo "${SCRIPT_DIR}/${SCRIPT}"
+  else
+    log_warn "[apps] No script mapped for selection: $SELECTION"
+  fi
 done <<< "$SELECTED"
 
 log_info "[apps] App selection complete."

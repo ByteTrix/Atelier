@@ -18,6 +18,17 @@ SELECTED_SCRIPTS_FILE="/tmp/setupr_selected_scripts.txt"
 REAL_USER="${SUDO_USER:-$USER}"
 DEFAULT_SAVE_PATH="$HOME/Downloads/setupr-config-$(date +%Y%m%d-%H%M%S).json"
 
+# Helper function to add a package to the temporary selected scripts file
+add_script_to_temp() {
+  local package="$1"
+  local module_path="${SCRIPT_DIR}/modules/${package}.sh"
+  if [ -f "$module_path" ]; then
+    echo "$module_path" >> "$SELECTED_SCRIPTS_FILE"
+  else
+    log_warn "Module not found for package: $package (expected at: $module_path)"
+  fi
+}
+
 # Function to display a summary of selected packages
 display_summary() {
   local config_file=$1
@@ -134,6 +145,17 @@ fi
 # Ensure Downloads directory exists
 mkdir -p "$HOME/Downloads"
 
+# Initialize config file with current timestamp
+CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+echo '{
+  "mode": "",
+  "timestamp": "'"$CURRENT_TIME"'",
+  "packages": []
+}' > "$CONFIG_TEMP"
+
+# Clear any previous temporary selected scripts file
+: > "$SELECTED_SCRIPTS_FILE"
+
 # Installation modes with modern styling
 print_section "Installation Mode"
 MODES=(
@@ -152,62 +174,38 @@ declare -a VERIFIED_SCRIPTS=()
 
 case "$MODE" in
   "🚀 Auto Install"*)
+    echo '{"mode": "Auto Install"}' | jq -s '.[0] * input' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
     if [ -f "${SCRIPT_DIR}/recommended-config.json" ]; then
       gum style --foreground 99 "📦 Loading recommended configuration..."
       
-      # Clean up any existing temporary files
-      rm -f "$SELECTED_SCRIPTS_FILE"
-      
-      # Read scripts from recommended config and store in temp file
-      jq -r '.selections | to_entries | .[] | .key as $category | .value | to_entries | .[] | $category + "/" + .key' "${SCRIPT_DIR}/recommended-config.json" | while read -r package; do
-        module_path="${SCRIPT_DIR}/modules/${package}"
-        if [ -f "$module_path" ]; then
-          echo "$module_path" >> "$SELECTED_SCRIPTS_FILE"
-        fi
+      # Read recommended packages and add each to the temp file
+      jq -r '.selections | to_entries | .[] | .key as $category | .value | to_entries | .[] | $category + "/" + .key' \
+        "${SCRIPT_DIR}/recommended-config.json" | while read -r package; do
+          add_script_to_temp "$package"
+          # Also add to the JSON config
+          jq --arg pkg "$package" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
       done
-      
-      # Create temporary config in the expected format
-      echo '{
-  "mode": "Auto Install",
-  "timestamp": "'"$(date +"%Y-%m-%d %H:%M:%S")"'",
-  "packages": ['"$(jq -r '.selections | to_entries | .[] | .key as $category | .value | to_entries | .[] | "\"" + $category + "/" + (.key | sub(".sh$"; "")) + "\""' "${SCRIPT_DIR}/recommended-config.json" | paste -sd,)"']
-}' > "$CONFIG_TEMP"
     else
       log_error "Recommended configuration file not found!"
       exit 1
     fi
     ;;
   "🔨 Interactive Installation"*)
-    # Create initial temporary files
-    > "$SELECTED_SCRIPTS_FILE"
-    
-    # Create initial config JSON with current timestamp
-    CURRENT_TIME=$(date +"%Y-%m-%d %H:%M:%S")
-    echo '{
-  "mode": "Interactive Installation",
-  "timestamp": "'"$CURRENT_TIME"'",
-  "packages": []
-}' > "$CONFIG_TEMP"
-    
-    # Categories to process
+    echo '{"mode": "Interactive Installation"}' | jq -s '.[0] * input' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
     CATEGORIES=("languages" "cli" "containers" "ides" "browsers" "apps" "mobile" "config")
-    
     for category in "${CATEGORIES[@]}"; do
       MENU_SCRIPT="${SCRIPT_DIR}/modules/${category}/menu.sh"
       if [ -f "$MENU_SCRIPT" ]; then
         gum spin --spinner dot --title "Loading ${category} options..." -- sleep 1
-        
         log_info "Launching ${category} menu..."
         selections=$(bash "$MENU_SCRIPT")
-        
         if [ -n "$selections" ]; then
-          echo "$selections" >> "$SELECTED_SCRIPTS_FILE"
           while IFS= read -r script_path; do
+            # Remove the base path and .sh extension to get package name
             script_rel_path=${script_path#"${SCRIPT_DIR}/modules/"}
             package_name="${script_rel_path%.sh}"
-            
+            add_script_to_temp "$package_name"
             jq --arg pkg "$package_name" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
-            
             echo "Selected: $package_name" | gum style --foreground 99
           done <<< "$selections"
         fi
@@ -215,12 +213,10 @@ case "$MODE" in
         log_warn "No interactive menu found for ${category}; skipping."
       fi
     done
-    
     # If no packages were selected, add a placeholder
     if [ "$(jq '.packages | length' "$CONFIG_TEMP")" -eq 0 ]; then
       jq '.packages += ["No packages selected"]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
     fi
-    
     # Save config to Downloads with correct permissions
     cp "$CONFIG_TEMP" "$DEFAULT_SAVE_PATH"
     chmod 644 "$DEFAULT_SAVE_PATH"
@@ -242,28 +238,16 @@ case "$MODE" in
         "No saved configurations found in Downloads folder."
       exit 1
     fi
-    
     print_section "Saved Configurations"
     CONFIG_FILE=$(gum choose --cursor.foreground="212" --selected.foreground="212" --header="Select a configuration:" "${CONFIGS[@]}")
-    
     if [ -f "$CONFIG_FILE" ]; then
       gum spin --spinner dot --title "Loading configuration..." -- sleep 1
       cp "$CONFIG_FILE" "$CONFIG_TEMP"
-      
       log_info "Extracting package information from config file"
-      
       jq -r '.packages[]' "$CONFIG_FILE" | while read -r package; do
-        module_path="${SCRIPT_DIR}/modules/${package}.sh"
-        log_info "Checking for script: $module_path"
-        
-        if [ -f "$module_path" ]; then
-          echo "$module_path" >> "$SELECTED_SCRIPTS_FILE"
-          log_info "Added script: $module_path"
-        else
-          log_warn "Script not found for package: $package (expected path: $module_path)"
-        fi
+        add_script_to_temp "$package"
+        log_info "Added script for package: $package"
       done
-      
       script_count=$(wc -l < "$SELECTED_SCRIPTS_FILE")
       if [ "$script_count" -eq 0 ]; then
         log_error "No valid installation scripts found in configuration!"
@@ -282,7 +266,7 @@ case "$MODE" in
     ;;
 esac
 
-# Verify that selected scripts file exists and is not empty
+# Verify that the selected scripts file exists and is not empty
 if [ -f "$SELECTED_SCRIPTS_FILE" ] && [ -s "$SELECTED_SCRIPTS_FILE" ]; then
   print_section "Verifying Installation Scripts"
   while IFS= read -r script; do
@@ -337,7 +321,7 @@ if gum confirm "$(gum style --bold --foreground 99 "Ready to install $(gum style
     gum style --foreground 196 --bold --border normal --align center --width 50 --margin "1 2" \
       "⚠️ Installation completed with $failed errors" "" "$((total - failed))/$total packages were successfully installed."
   fi
-  # Cleanup temp files
+  # Cleanup temporary files
   rm -f "$SELECTED_SCRIPTS_FILE" "$CONFIG_TEMP"
 else
   gum style --foreground 99 "Installation cancelled."
