@@ -3,25 +3,57 @@ set -euo pipefail
 
 # Initialize sudo session and cache credentials
 init_sudo_session() {
+    # Create a sudo token file to share across processes
+    SUDO_TOKEN_FILE="/tmp/setupr_sudo_token"
+    
+    # Check if we're already in a sudo context
     if [ -n "$SUDO_USER" ]; then
-        log_info "Running in sudo context, no need to initialize session"
+        # Create token file if it doesn't exist
+        if [ ! -f "$SUDO_TOKEN_FILE" ]; then
+            touch "$SUDO_TOKEN_FILE"
+            chmod 600 "$SUDO_TOKEN_FILE"
+        fi
         return 0
     fi
     
     log_info "Initializing sudo session..."
-    # Cache sudo credentials and keep them alive
+    # Get sudo timestamp
     sudo -v
-    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+    
+    # Create or update token file
+    touch "$SUDO_TOKEN_FILE"
+    chmod 600 "$SUDO_TOKEN_FILE"
+    
+    # Start background process to keep sudo token alive
+    (
+        while true; do
+            if [ -f "$SUDO_TOKEN_FILE" ]; then
+                sudo -n true
+                sleep 60
+            else
+                exit 0
+            fi
+        done
+    ) 2>/dev/null &
+    
+    # Store background process PID
+    echo $! > "$SUDO_TOKEN_FILE"
 }
 
 # Wrapper function to execute commands with cached sudo
 sudo_exec() {
-    if [ -n "$SUDO_USER" ]; then
-        # Already running in sudo context
-        "$@"
+    # Check for sudo token file
+    if [ -f "/tmp/setupr_sudo_token" ] || [ -n "$SUDO_USER" ]; then
+        if [ -n "$SUDO_USER" ]; then
+            # Already in sudo context
+            "$@"
+        else
+            # Use sudo with cached credentials
+            sudo -n "$@"
+        fi
     else
-        # Need to use sudo
-        sudo -n "$@"
+        # No cached credentials, ask for password
+        sudo "$@"
     fi
 }
 

@@ -18,11 +18,13 @@ log_info "[node] Installing Node.js..."
 if ! command -v node &> /dev/null; then
     # Add NodeSource repository
     log_info "[node] Adding NodeSource repository..."
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_lts.x > /tmp/nodesource_setup.sh
+    sudo_exec bash /tmp/nodesource_setup.sh
+    rm -f /tmp/nodesource_setup.sh
 
     # Install Node.js and build essentials
     log_info "[node] Installing Node.js and dependencies..."
-    sudo apt-get install -y nodejs build-essential
+    sudo_exec apt-get install -y nodejs build-essential
 
     log_success "[node] Node.js installed successfully!"
 

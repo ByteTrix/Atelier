@@ -286,15 +286,24 @@ fi
 
 # Execute all selected scripts
 log_info "Bulk executing selected modules..."
+
+# Export sudo functions for child processes
+export -f sudo_exec
+export SETUPR_SUDO=1
+
 while IFS= read -r script; do
   if [ -n "$script" ]; then
     log_info "Executing $script..."
-    SETUPR_SUDO=1 bash "$script"
+    # Source utils.sh in subshell to ensure sudo functions are available
+    (source "${SCRIPT_DIR}/lib/utils.sh" && bash "$script")
   fi
 done < "$SELECTED_SCRIPTS_FILE"
 
 # Cleanup
 rm -f "$SELECTED_SCRIPTS_FILE"
+# Clean up sudo token
+rm -f "/tmp/setupr_sudo_token"
 
 # Run system cleanup
-SETUPR_SUDO=1 bash "${SCRIPT_DIR}/system-cleanup.sh"
+source "${SCRIPT_DIR}/lib/utils.sh"
+bash "${SCRIPT_DIR}/system-cleanup.sh"
