@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source ~/.local/share/Setupr/lib/utils.sh
 
-log_info "Installing essential system tools..."
-apt update
-apt install -y git curl wget zsh vim neovim htop tmux build-essential software-properties-common unzip xclip jq gnome-tweak-tool gnome-sushi dbus-x11 gpg apt-transport-https
-log_info "Essential system tools installed."
+SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+source "${SCRIPT_DIR}/lib/utils.sh"
+
+log_info "Installing essential tools..."
+
+# Install basic development tools
+sudo apt install -y \
+  build-essential \
+  curl \
+  wget \
+  git \
+  software-properties-common \
+  apt-transport-https \
+  ca-certificates \
+  gnupg \
+  lsb-release
+
+log_info "Essential tools installation complete."

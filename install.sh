@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Get script directory for portable installation
+# Get script directory and config paths
 INSTALL_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+CONFIG_FILE="${INSTALL_DIR}/setupr-config.json"
+CONFIG_TEMP="/tmp/setupr_config_temp.json"
+DOWNLOADS_DIR="$HOME/Downloads"
+DEFAULT_SAVE_PATH="${DOWNLOADS_DIR}/setupr_config_$(date +%Y%m%d_%H%M%S).json"
 
 # Source shared utilities.
-# Source shared utilities from lib directory
 if [ -f "${INSTALL_DIR}/lib/utils.sh" ]; then
   source "${INSTALL_DIR}/lib/utils.sh"
 else
@@ -32,25 +35,83 @@ if $RUNNING_GNOME; then
   # Prevent sleep/lock during installation.
   gsettings set org.gnome.desktop.screensaver lock-enabled false
   gsettings set org.gnome.desktop.session idle-delay 0
-
   echo "Get ready to make a few choices..."
-  
 fi
 
-# -------------------------
-# Begin mode selection via Gum.
-# -------------------------
-# Ensure Gum is installed.
+# Ensure Gum and jq are installed.
 if ! command -v gum &>/dev/null; then
   bash "${INSTALL_DIR}/modules/cli/install-gum.sh"
 fi
 
-# Use Gum to select installation mode.
-mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+if ! command -v jq &>/dev/null; then
+  bash "${INSTALL_DIR}/modules/cli/install-jq.sh"
+fi
+
+# Ask user if they want to upload a config
+if gum confirm "Do you want to upload a configuration file?"; then
+  log_info "Please select a configuration file from your Downloads directory"
+  config_files=$(find "$DOWNLOADS_DIR" -name "setupr_config*.json" -type f -printf "%f\n" | sort -r)
+  if [ -n "$config_files" ]; then
+    selected_config=$(echo "$config_files" | gum choose --header "Select a configuration file:")
+    if [ -n "$selected_config" ]; then
+      cp "${DOWNLOADS_DIR}/${selected_config}" "$CONFIG_FILE"
+      log_info "Configuration loaded from ${selected_config}"
+    fi
+  else
+    log_warn "No configuration files found in Downloads directory"
+  fi
+fi
+
+# Check for existing config
+if [ -f "$CONFIG_FILE" ]; then
+  if gum confirm "Found existing configuration. Would you like to use it?"; then
+    display_summary "$CONFIG_FILE"
+    if gum confirm "Proceed with this configuration?"; then
+      config_data=$(load_config "$CONFIG_FILE")
+      mode=$(echo "$config_data" | jq -r '.mode')
+      log_info "Using saved configuration"
+    else
+      mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+    fi
+  else
+    mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+  fi
+else
+  mode=$(gum choose --header "Select Installation Mode:" "Automatic (Beginner Mode)" "Advanced (Full Interactive Mode)")
+fi
+
 log_info "Selected mode: $mode"
 
 if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
   log_info "Running Automatic Installation..."
+
+  # Create initial config JSON
+  echo '{
+    "mode": "Automatic (Beginner Mode)",
+    "timestamp": "",
+    "packages": []
+  }' > "$CONFIG_TEMP"
+
+  # Add timestamp
+  jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.timestamp = $ts' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+
+  # Add default packages
+  jq '.packages += ["Flatpak Setup", "Python Runtime", "Node.js Runtime", "VS Code IDE", "Chrome Browser", "Brave Browser", "Docker Engine", "System Config", "GNOME Theme"]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+
+  # Move temp config to final location
+  mv "$CONFIG_TEMP" "$CONFIG_FILE"
+
+  # Save config to Downloads
+  cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
+  log_info "Configuration saved to $DEFAULT_SAVE_PATH"
+
+  # Display installation summary
+  display_summary "$CONFIG_FILE"
+  
+  if ! gum confirm "Proceed with installation?"; then
+    log_info "Installation cancelled by user"
+    exit 0
+  fi
 
   # Enhanced installation with parallel execution and progress tracking
   declare -A INSTALL_STEPS=(
@@ -60,7 +121,6 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
     ["VS Code IDE"]="modules/ides/install-vscode.sh"
     ["Chrome Browser"]="modules/browsers/install-chrome.sh"
     ["Brave Browser"]="modules/browsers/install-brave.sh"
-    ["Productivity Apps"]="modules/apps/install-*.sh"
     ["Docker Engine"]="modules/containers/install-docker.sh"
     ["System Config"]="modules/config/setup-dotfiles.sh"
     ["GNOME Theme"]="modules/theme/install-gnome-theme.sh"
@@ -116,27 +176,6 @@ if [[ "$mode" == "Automatic (Beginner Mode)" ]]; then
     gum pager
   fi
 
-  # Add post-install checks
-  log_info "Running post-installation verification..."
-  gum spin --spinner moon --title "Verifying installations..." -- \
-    bash -c '
-      declare -A CHECKS=(
-        ["Python"]="python3 --version"
-        ["Node.js"]="node --version"
-        ["Docker"]="docker --version"
-        ["VS Code"]="code --version"
-      )
-
-      echo -e "Verification Results:\n" > "${INSTALL_DIR}/verification.txt"
-      for name in "${!CHECKS[@]}"; do
-        if ${CHECKS[$name]} &>/dev/null; then
-          echo "✅ $name" >> "${INSTALL_DIR}/verification.txt"
-        else
-          echo "❌ $name" >> "${INSTALL_DIR}/verification.txt"
-        fi
-      done
-    '
-
 elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   log_info "Running Advanced Installation..."
 
@@ -145,20 +184,58 @@ elif [[ "$mode" == "Advanced (Full Interactive Mode)" ]]; then
   bash "${INSTALL_DIR}/essential-tools.sh"
   bash "${INSTALL_DIR}/flatpak-setup.sh"
 
-  # Create a temporary file to collect selected script paths.
+  # Create initial config JSON
+  echo '{
+    "mode": "Advanced (Full Interactive Mode)",
+    "timestamp": "",
+    "packages": []
+  }' > "$CONFIG_TEMP"
+
+  # Add timestamp
+  jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.timestamp = $ts' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+
+  # Create a temporary file to collect selected script paths
   SELECTED_SCRIPTS_FILE="/tmp/Setupr_selected_scripts.txt"
   > "$SELECTED_SCRIPTS_FILE"
 
-  # For each module category, launch its interactive menu and append selected script paths.
+  # For each module category, launch its interactive menu and append selected script paths
   for category in languages cli containers ides browsers apps mobile config theme; do
     MENU_SCRIPT="${INSTALL_DIR}/modules/${category}/menu.sh"
     if [ -f "$MENU_SCRIPT" ]; then
       log_info "Launching ${category} menu..."
-      bash "$MENU_SCRIPT" >> "$SELECTED_SCRIPTS_FILE"
+      selections=$(bash "$MENU_SCRIPT")
+      if [ -n "$selections" ]; then
+        echo "$selections" >> "$SELECTED_SCRIPTS_FILE"
+        while IFS= read -r script; do
+          # Extract package name from script path and add to config
+          package_name="${category}/$(basename "${script/.sh/}")"
+          jq --arg pkg "$package_name" '.packages += [$pkg]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+        done <<< "$selections"
+      fi
     else
       log_warn "No interactive menu found for ${category}; skipping."
     fi
   done
+
+  # If no packages were selected, add a placeholder
+  if [ "$(jq '.packages | length' "$CONFIG_TEMP")" -eq 0 ]; then
+    jq '.packages += ["No packages selected"]' "$CONFIG_TEMP" > "${CONFIG_TEMP}.tmp" && mv "${CONFIG_TEMP}.tmp" "$CONFIG_TEMP"
+  fi
+
+  # Move temp config to final location
+  mv "$CONFIG_TEMP" "$CONFIG_FILE"
+
+  # Save config to Downloads
+  cp "$CONFIG_FILE" "$DEFAULT_SAVE_PATH"
+  log_info "Configuration saved to $DEFAULT_SAVE_PATH"
+
+  # Display installation summary
+  display_summary "$CONFIG_FILE"
+  
+  if ! gum confirm "Proceed with installation?"; then
+    log_info "Installation cancelled by user"
+    exit 0
+  fi
 
   # Bulk execute all selected scripts.
   log_info "Bulk executing selected modules..."

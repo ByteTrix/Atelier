@@ -1,24 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Define the installation directory (adjust if necessary)
-INSTALL_DIR="${HOME}/.local/share/Setupr"
+SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-# Source shared utility functions.
-source "${INSTALL_DIR}/lib/utils.sh"
-
-log_info "[cli/install-gum] Checking for curl..."
-if ! command -v curl &>/dev/null; then
-  log_info "[cli/install-gum] curl is not installed. Installing curl..."
-  sudo apt update && apt install -y curl
+if command -v gum &>/dev/null; then
+    log_info "Gum is already installed"
+    exit 0
 fi
 
-cd /tmp
-GUM_VERSION="0.14.3"  # Use a known good version
-log_info "[cli/install-gum] Downloading Gum version ${GUM_VERSION}..."
-curl -fsSL -o gum.deb "https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/gum_${GUM_VERSION}_amd64.deb"
-log_info "[cli/install-gum] Installing Gum..."
-sudo dpkg -i gum.deb || sudo apt-get -f install -y
-rm -f gum.deb
-cd -
-log_info "[cli/install-gum] Gum installation complete."
+log_info "Installing Gum..."
+
+# Add Charm repository
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+
+# Install Gum
+sudo apt update && sudo apt install -y gum
+
+log_info "Installed Gum successfully"
