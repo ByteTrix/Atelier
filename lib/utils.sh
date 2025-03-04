@@ -3,6 +3,11 @@ set -euo pipefail
 
 # Initialize sudo session and cache credentials
 init_sudo_session() {
+    if [ -n "$SUDO_USER" ]; then
+        log_info "Running in sudo context, no need to initialize session"
+        return 0
+    fi
+    
     log_info "Initializing sudo session..."
     # Cache sudo credentials and keep them alive
     sudo -v
@@ -11,7 +16,18 @@ init_sudo_session() {
 
 # Wrapper function to execute commands with cached sudo
 sudo_exec() {
-    sudo -n "$@"
+    if [ -n "$SUDO_USER" ]; then
+        # Already running in sudo context
+        "$@"
+    else
+        # Need to use sudo
+        sudo -n "$@"
+    fi
+}
+
+# Helper to check if we're running in a sudo context
+is_sudo_context() {
+    [ -n "$SUDO_USER" ]
 }
 
 log_info() {

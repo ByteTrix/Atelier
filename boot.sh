@@ -10,18 +10,16 @@ ascii_art='
 ███████║███████╗   ██║   ╚██████╔╝██║     ██║  ██║
 ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝  ╚═╝
 
-
 '
 
-# Ensure running as root
-if [ "$EUID" -ne 0 ]; then 
-  echo "Please run as root (with sudo)"
+# Ensure running with sudo, not as root directly
+if [ "$EUID" -eq 0 ] && [ -z "$SUDO_USER" ]; then
+  echo "Error: Please run with sudo, not as root directly."
   exit 1
 fi
 
-# Ensure SUDO_USER is set
-if [ -z "$SUDO_USER" ]; then
-  echo "Error: SUDO_USER not set. Please run with sudo, not as root directly."
+if [ "$EUID" -ne 0 ]; then
+  echo "Error: Please run with sudo."
   exit 1
 fi
 
@@ -57,10 +55,14 @@ chmod +x "$INSTALL_DIR/install.sh"
 chmod +x "$INSTALL_DIR/check-version.sh"
 chmod +x "$INSTALL_DIR"/modules/*/*.sh
 
-# Set proper ownership of installation directory
+# Set proper ownership
 chown -R ${SUDO_USER}:${SUDO_USER} "$INSTALL_DIR"
 
 echo "Installation starting..."
 
-# Run install.sh as the actual user
-sudo -u "$SUDO_USER" bash "$INSTALL_DIR/install.sh"
+# Run install.sh with preserved environment variables
+HOME="$USER_HOME" \
+USER="$SUDO_USER" \
+LOGNAME="$SUDO_USER" \
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin" \
+sudo -E -H -u "$SUDO_USER" bash "$INSTALL_DIR/install.sh"
