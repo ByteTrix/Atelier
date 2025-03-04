@@ -19,6 +19,12 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+# Ensure SUDO_USER is set
+if [ -z "$SUDO_USER" ]; then
+  echo "Error: SUDO_USER not set. Please run with sudo, not as root directly."
+  exit 1
+fi
+
 echo -e "$ascii_art"
 echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
 echo -e "\nBegin installation (or abort with ctrl+c)..."
@@ -51,5 +57,10 @@ chmod +x "$INSTALL_DIR/install.sh"
 chmod +x "$INSTALL_DIR/check-version.sh"
 chmod +x "$INSTALL_DIR"/modules/*/*.sh
 
+# Set proper ownership of installation directory
+chown -R ${SUDO_USER}:${SUDO_USER} "$INSTALL_DIR"
+
 echo "Installation starting..."
-cd "$INSTALL_DIR" && sudo bash install.sh
+
+# Run install.sh as the actual user
+sudo -u "$SUDO_USER" bash "$INSTALL_DIR/install.sh"
