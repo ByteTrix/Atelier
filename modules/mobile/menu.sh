@@ -7,6 +7,10 @@ source "$DIR/../../lib/utils.sh"
 declare -A options=(
   ["Android Studio"]="install-android-studio.sh"
   ["Flutter SDK"]="install-flutter.sh"
+  ["React Native (JavaScript framework for mobile apps)"]="install-react-native.sh"
+  ["Xamarin (C# framework for mobile apps)"]="install-xamarin.sh"
+  ["Ionic (Cross-platform mobile app framework)"]="install-ionic.sh"
+  ["Cordova (Mobile apps with HTML, CSS & JS)"]="install-cordova.sh"
 )
 
 descriptions=("${!options[@]}")

@@ -20,6 +20,12 @@ declare -A IDE_OPTIONS=(
   ["IntelliJ IDEA CE (Java & JVM languages IDE)"]="install-intellij.sh"
   ["GNU Emacs (Extensible, customizable editor)"]="install-emacs.sh"
   ["Geany IDE (Lightweight, fast IDE)"]="install-geany.sh"
+  ["PyCharm (Python IDE)"]="install-pycharm.sh"
+  ["Eclipse (Java IDE)"]="install-eclipse.sh"
+  ["NetBeans (Java IDE)"]="install-netbeans.sh"
+  ["Sublime Text (Text editor for code, markup, and prose)"]="install-sublime.sh"
+  ["Atom (Hackable text editor)"]="install-atom.sh"
+  ["Vim (Highly configurable text editor)"]="install-vim.sh"
 )
 
 IDE_DESCRIPTIONS=("${!IDE_OPTIONS[@]}")

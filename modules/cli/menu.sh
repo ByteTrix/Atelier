@@ -29,6 +29,10 @@ declare -A CLI_OPTIONS=(
   ["LSD (LSDeluxe, modern ls alternative)"]="install-lsd.sh"
   ["Gum (Stylish shell script UI toolkit)"]="install-gum.sh"
   ["Ghostty (Modern GPU-accelerated terminal)"]="install-ghostty.sh"
+  ["Jq (Command-line JSON processor)"]="install-jq.sh"
+  ["Httpie (User-friendly HTTP client)"]="install-httpie.sh"
+  ["Tmux (Terminal multiplexer)"]="install-tmux.sh"
+  ["Neovim (Hyperextensible Vim-based text editor)"]="install-neovim.sh"
 )
 
 CLI_DESCRIPTIONS=("${!CLI_OPTIONS[@]}")

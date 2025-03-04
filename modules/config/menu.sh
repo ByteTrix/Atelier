@@ -18,6 +18,9 @@ log_info "[config] Initializing system configuration menu..."
 declare -A CONFIG_OPTIONS=(
   ["Setup Dotfiles (Configure shell and environment)"]="setup-dotfiles.sh"
   ["Configure VS Code Keyring (Secure credential storage)"]="configure-vscode-keyring.sh"
+  ["Configure Firewall (Set up UFW firewall)"]="configure-firewall.sh"
+  ["Configure Timezone (Set system timezone)"]="configure-timezone.sh"
+  ["Configure Network (Set up network interfaces)"]="configure-network.sh"
 )
 
 CONFIG_DESCRIPTIONS=("${!CONFIG_OPTIONS[@]}")
