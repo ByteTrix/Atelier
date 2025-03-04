@@ -33,7 +33,7 @@ mkdir -p "$INSTALL_DIR"
 
 echo "Cloning Setupr..."
 rm -rf "$INSTALL_DIR"
-git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"
+git clone -b upgrage https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"
 
 if [[ "${Setupr_REF:-master}" != "master" ]]; then
   cd "$INSTALL_DIR"
