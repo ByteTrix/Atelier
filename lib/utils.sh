@@ -7,11 +7,11 @@
 set -euo pipefail
 
 # Color definitions for logging
-readonly RED='\033[0;31m'
-readonly YELLOW='\033[1;33m'
-readonly GREEN='\033[0;32m'
-readonly BLUE='\033[0;34m'
-readonly NC='\033[0m' # No Color
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
 # Logging functions
 #######################################
@@ -69,7 +69,7 @@ init_sudo_session() {
         sleep 600
     done) 2>/dev/null &
     
-    readonly SUDO_KEEPER_PID=$!
+    SUDO_KEEPER_PID=$!
     
     # Clean up the background process on exit
     trap 'kill $SUDO_KEEPER_PID 2>/dev/null || true' EXIT
@@ -136,7 +136,7 @@ symlink_file() {
         return 1
     fi
 
-    if [ ! -e "$source_file" ]; then
+    if ! [ -e "$source_file" ]; then
         log_error "symlink_file: Source file does not exist: $source_file"
         return 1
     fi

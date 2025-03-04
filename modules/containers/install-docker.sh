@@ -26,12 +26,6 @@ readonly DOCKER_REPOSITORY="https://download.docker.com/linux/ubuntu"
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-# Determine sudo command based on environment
-SUDO_CMD="sudo"
-if [[ "${SETUPR_SUDO:-0}" == "1" ]]; then
-    SUDO_CMD="sudo_exec"
-fi
-
 # Check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
@@ -69,52 +63,36 @@ check_system_compatibility() {
     return 0
 }
 
-# Check for required dependencies
-check_dependencies() {
-    local missing_deps=()
-    
-    for cmd in "${REQUIRED_COMMANDS[@]}"; do
-        if ! command_exists "$cmd"; then
-            missing_deps+=("$cmd")
-        fi
-    done
-    
-    if [ ${#missing_deps[@]} -ne 0 ]; then
-        log_error "Missing required dependencies: ${missing_deps[*]}"
-        return 1
-    fi
-    
-    return 0
-}
-
 # Setup Docker repository
 setup_repository() {
     log_info "Setting up Docker repository..."
     
-    # Install required packages for repository setup
-    $SUDO_CMD apt-get update
-    $SUDO_CMD apt-get install -y \
+    # Install required packages
+    sudo apt-get update
+    sudo apt-get install -y \
         ca-certificates \
         curl \
         gnupg \
         lsb-release
     
     # Create directory for keyrings
-    $SUDO_CMD mkdir -p /etc/apt/keyrings
+    sudo install -m 0755 -d /etc/apt/keyrings
     
     # Download and add Docker's official GPG key
     curl -fsSL "$DOCKER_GPG_KEY_URL" | \
-        $SUDO_CMD gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
     
     # Add Docker repository
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
         $DOCKER_REPOSITORY \
         $(lsb_release -cs) stable" | \
-        $SUDO_CMD tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     
     # Update package index
-    $SUDO_CMD apt-get update
+    sudo apt-get update
 }
 
 # Install Docker packages
@@ -122,7 +100,7 @@ install_docker() {
     log_info "Installing Docker Engine..."
     
     # Install Docker packages
-    if ! $SUDO_CMD apt-get install -y \
+    if ! sudo apt-get install -y \
         docker-ce \
         docker-ce-cli \
         containerd.io \
@@ -140,13 +118,13 @@ configure_docker() {
     log_info "Configuring Docker..."
     
     # Enable Docker service
-    if ! $SUDO_CMD systemctl enable --now docker; then
+    if ! sudo systemctl enable --now docker; then
         log_error "Failed to enable Docker service"
         return 1
     fi
     
     # Add user to docker group
-    if ! $SUDO_CMD usermod -aG docker "$USER"; then
+    if ! sudo usermod -aG docker "$USER"; then
         log_warn "Failed to add user to docker group"
         log_warn "You may need to use sudo with docker commands"
     fi
@@ -168,7 +146,7 @@ verify_installation() {
     fi
     
     # Check Docker service
-    if ! $SUDO_CMD systemctl is-active --quiet docker; then
+    if ! sudo systemctl is-active --quiet docker; then
         log_error "Docker service is not running"
         return 1
     fi
@@ -185,36 +163,43 @@ verify_installation() {
 main() {
     log_info "Beginning Docker installation..."
     
+    # Check if already installed
+    if command_exists docker; then
+        current_version=$(docker --version)
+        log_warn "Docker is already installed (Version: $current_version)"
+        return 0
+    fi
+    
+    # Check system compatibility
     if ! check_system_compatibility; then
         log_error "System compatibility check failed"
         exit 1
     fi
     
-    if ! check_dependencies; then
-        log_error "Dependency check failed"
-        exit 1
-    fi
-    
+    # Setup repository
     if ! setup_repository; then
         log_error "Failed to setup Docker repository"
         exit 1
     fi
     
+    # Install Docker
     if ! install_docker; then
         log_error "Docker installation failed"
         exit 1
     fi
     
+    # Configure Docker
     if ! configure_docker; then
         log_warn "Docker configuration had some issues, but continuing..."
     fi
     
+    # Verify installation
     if ! verify_installation; then
         log_error "Docker installation verification failed"
         exit 1
     fi
     
-    log_success "Docker installation completed successfully!"
+    log_info "Docker installation completed successfully!"
     log_info "NOTE: You may need to log out and back in for group changes to take effect"
 }
 
