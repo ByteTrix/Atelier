@@ -18,25 +18,37 @@ get_package_manager() {
     fi
 }
 
-# Function to clean repository files
-clean_repository() {
-    local name="$1"
+# Function to clean system repositories
+clean_system_repositories() {
+    # Remove problematic repository files
+    sudo rm -f /etc/apt/sources.list.d/*.list
+    sudo rm -f /etc/apt/trusted.gpg.d/*.gpg
+    sudo rm -f /usr/share/keyrings/*.gpg
     
-    # Remove old repository files
-    sudo rm -f "/etc/apt/sources.list.d/${name}.list"
-    sudo rm -f "/etc/apt/sources.list.d/${name}-*.list"
-    sudo rm -f "/etc/apt/trusted.gpg.d/${name}*.gpg"
-    sudo rm -f "/usr/share/keyrings/${name}*.gpg"
+    # Update package lists with only main sources
+    sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list" \
+        -o Dir::Etc::sourceparts="-" \
+        -o APT::Get::List-Cleanup="0"
 }
 
-# Function to add repository GPG key
-add_repository_key() {
+# Function to setup repository
+setup_repository() {
     local name="$1"
     local key_url="$2"
-    local keyring="/usr/share/keyrings/${name}.gpg"
+    local repo_url="$3"
+    local repo_line="$4"
     
-    curl -fsSL "$key_url" | sudo gpg --dearmor -o "$keyring"
-    echo "$keyring"
+    # Download and verify GPG key
+    curl -fsSL "$key_url" | sudo gpg --dearmor -o "/usr/share/keyrings/${name}.gpg"
+    
+    # Add repository with signed-by option
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/${name}.gpg] $repo_url $repo_line" | \
+        sudo tee "/etc/apt/sources.list.d/${name}.list"
+    
+    # Update only this repository
+    sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list.d/${name}.list" \
+        -o Dir::Etc::sourceparts="-" \
+        -o APT::Get::List-Cleanup="0"
 }
 
 # Function to setup package sources
@@ -45,55 +57,42 @@ setup_package_source() {
     
     case "$pkg" in
         "google-chrome-stable")
-            clean_repository "google-chrome"
-            local keyring
-            keyring=$(add_repository_key "google-chrome" "https://dl.google.com/linux/linux_signing_key.pub")
-            echo "deb [arch=amd64 signed-by=$keyring] http://dl.google.com/linux/chrome/deb/ stable main" | \
-                sudo tee /etc/apt/sources.list.d/google-chrome.list
+            setup_repository \
+                "google-chrome" \
+                "https://dl.google.com/linux/linux_signing_key.pub" \
+                "http://dl.google.com/linux/chrome/deb/" \
+                "stable main"
             ;;
         "code"|"vscode")
-            clean_repository "vscode"
-            local keyring
-            keyring=$(add_repository_key "vscode" "https://packages.microsoft.com/keys/microsoft.asc")
-            echo "deb [arch=amd64,arm64,armhf signed-by=$keyring] https://packages.microsoft.com/repos/code stable main" | \
-                sudo tee /etc/apt/sources.list.d/vscode.list
+            setup_repository \
+                "vscode" \
+                "https://packages.microsoft.com/keys/microsoft.asc" \
+                "https://packages.microsoft.com/repos/code" \
+                "stable main"
             ;;
         "brave-browser")
-            clean_repository "brave-browser"
-            local keyring
-            keyring=$(add_repository_key "brave-browser" "https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg")
-            echo "deb [arch=amd64 signed-by=$keyring] https://brave-browser-apt-release.s3.brave.com/ stable main" | \
-                sudo tee /etc/apt/sources.list.d/brave-browser.list
-            ;;
-        "sublime-text")
-            clean_repository "sublime-text"
-            wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
-            echo "deb https://download.sublimetext.com/ apt/stable/" | \
-                sudo tee /etc/apt/sources.list.d/sublime-text.list
+            setup_repository \
+                "brave-browser" \
+                "https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg" \
+                "https://brave-browser-apt-release.s3.brave.com/" \
+                "stable main"
             ;;
         "nodejs"|"npm")
-            clean_repository "nodesource"
-            local keyring
-            keyring=$(add_repository_key "nodesource" "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key")
-            echo "deb [signed-by=$keyring] https://deb.nodesource.com/node_20.x nodistro main" | \
-                sudo tee /etc/apt/sources.list.d/nodesource.list
+            setup_repository \
+                "nodesource" \
+                "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key" \
+                "https://deb.nodesource.com/node_20.x" \
+                "nodistro main"
             ;;
     esac
-    
-    # Update package lists if we added a new source
-    if [ $? -eq 0 ]; then
-        sudo apt update
-    fi
 }
 
 # Function to ensure snap is installed
 ensure_snap() {
     if ! command -v snap &>/dev/null; then
         log_info "Installing snap support..."
-        sudo apt update
-        sudo apt install -y snapd
+        sudo apt-get install -y snapd
         sudo systemctl enable --now snapd.socket
-        # Wait for snap to be ready
         sleep 5
     fi
 }
@@ -104,12 +103,11 @@ install_apt_package() {
     local retries=3
     local attempt=1
     
-    # Setup package source if needed
     setup_package_source "$pkg"
     
     while [ $attempt -le $retries ]; do
         log_info "Attempt $attempt of $retries: Installing $pkg"
-        if sudo DEBIAN_FRONTEND=noninteractive apt install -y "$pkg"; then
+        if sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"; then
             return 0
         fi
         ((attempt++))
@@ -125,7 +123,6 @@ install_snap_package() {
     local retries=3
     local attempt=1
     
-    # Some snaps require classic confinement
     local classic_snaps="code vscode android-studio intellij-idea-community pycharm-community postman gitkraken"
     
     while [ $attempt -le $retries ]; do
@@ -146,7 +143,7 @@ install_snap_package() {
     return 1
 }
 
-# Function to install a specific package with its type
+# Function to install a specific package
 install_package() {
     local pkg_with_type="$1"
     local pkg_name="${pkg_with_type%:*}"
@@ -163,7 +160,6 @@ install_package() {
             install_snap_package "$pkg_name"
             ;;
         "vscode")
-            # Special case for VS Code
             if command -v snap &>/dev/null; then
                 install_snap_package "code"
             else
@@ -179,12 +175,8 @@ install_package() {
 }
 
 # Main execution
-
-# Initialize sudo session
 init_sudo_session
-
-# Update package lists
-sudo apt update
+clean_system_repositories
 
 # Read packages from stdin and install them
 failed_packages=()

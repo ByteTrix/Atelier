@@ -3,9 +3,6 @@
 # Setupr Installation Script
 # ---------------------------
 # Modern development environment setup tool
-#
-# Author: Atelier Team
-# License: MIT
 
 set -euo pipefail
 
@@ -109,7 +106,8 @@ case "$MODE" in
             log_info "Dry run: Would run menu.sh"
             exit 0
         else
-            bash "${SCRIPT_DIR}/menu.sh" | ./install-pkg.sh
+            # Capture only package output, redirect other output to stderr
+            bash "${SCRIPT_DIR}/menu.sh" 2> >(grep -v "^[[:space:]]*$" >&2) | ./install-pkg.sh
         fi
         ;;
     "⚙️  Create New Configuration"*)
@@ -118,7 +116,7 @@ case "$MODE" in
         
         # Get selections from menu without installing
         SELECTIONS=$(mktemp)
-        bash "${SCRIPT_DIR}/menu.sh" > "$SELECTIONS"
+        bash "${SCRIPT_DIR}/menu.sh" > "$SELECTIONS" 2>/dev/null
         
         # Only proceed if selections were made
         if [ -s "$SELECTIONS" ]; then
