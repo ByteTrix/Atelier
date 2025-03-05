@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Setupr Installation Menu - Clean & Enhanced with gum animations
 
 # Strict mode
@@ -131,9 +131,30 @@ show_status_bar() {
     echo "$msg"
 }
 
-# Save current selections to a temp file with gum animation
+# Save current selections to temp file
 save_selections() {
-    gum spin --spinner dot --title "Saving selections..." -- bash -c "printf '%s\n' \"\${selected_packages[@]}\" > '$TEMP_CONFIG'"
+    local temp_content=""
+    
+    # First, create a temporary array to store individual packages
+    local package_list=()
+    
+    # Process each selected package entry
+    for pkg in "${selected_packages[@]}"; do
+        # Split space-separated packages
+        read -ra pkg_parts <<< "$pkg"
+        for part in "${pkg_parts[@]}"; do
+            package_list+=("$part")
+        done
+    done
+
+    # Save packages to temp file
+    printf "%s\n" "${package_list[@]}" > "$TEMP_CONFIG"
+
+    # Log saved packages for verification
+    log_info "Packages to be installed:"
+    while IFS= read -r line; do
+        log_info "- $line"
+    done < "$TEMP_CONFIG"
 }
 
 # Package selection menu for a given category
@@ -216,14 +237,11 @@ show_summary_and_install() {
     echo "$summary" | gum style --border double --align left --width $((TERM_WIDTH - 10)) --padding "1 2"
     if gum confirm --affirmative="Install" --negative="Cancel" --default=false "Proceed with installation?"; then
         show_header "Installing Packages"
-        gum spin --spinner dot --title "Preparing installation..." -- sleep 1
         save_selections
-        gum style --border normal --align center --width $((TERM_WIDTH - 20)) --padding "1 2" "Starting installation process..."
-        "${SCRIPT_DIR}/install-pkg.sh" < "$TEMP_CONFIG" &
-        local install_pid=$!
-        gum spin --spinner dot --title "Installing packages..." --show-output -- tail --pid=$install_pid -f /dev/null
-        wait $install_pid
-        if [ $? -eq 0 ]; then
+        
+        # Run installation with live output
+        echo -e "\nStarting installation process...\n"
+        if "${SCRIPT_DIR}/install-pkg.sh" < "$TEMP_CONFIG"; then
             gum style --border double --align center --width $((TERM_WIDTH - 20)) --padding "1 2" \
                 "$(gum style --foreground 82 "✅ Installation completed successfully!")"
         else
