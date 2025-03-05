@@ -34,7 +34,7 @@ echo -e "\nBegin installation (or abort with ctrl+c)..."
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone -b v2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+    git clone -b v2.2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
         echo "Error: Failed to clone repository"
         exit 1
     }
