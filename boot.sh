@@ -22,9 +22,16 @@ elif [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Set up installation directory
+# Set up installation directory and user info
 INSTALL_DIR="/usr/local/share/Setupr"
 USER_HOME=$(eval echo ~${SUDO_USER})
+export USER_HOME
+
+# Set correct environment for sudo user
+export HOME="$USER_HOME"
+export USER="$SUDO_USER"
+export LOGNAME="$SUDO_USER"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
 
 echo -e "$ascii_art"
 echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
@@ -57,24 +64,19 @@ fi
 # Make scripts executable and set permissions
 chmod +x "$INSTALL_DIR"/{install,check-version,system-update}.sh
 chmod +x "$INSTALL_DIR"/modules/*/*.sh 2>/dev/null || true
-chown -R ${SUDO_USER}:${SUDO_USER} "$INSTALL_DIR"
+chown -R "${SUDO_USER}:${SUDO_USER}" "$INSTALL_DIR"
 
 # Ensure proper permissions for user configs
 mkdir -p "${USER_HOME}/Downloads"
-chown -R ${SUDO_USER}:${SUDO_USER} "${USER_HOME}/Downloads"
+chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/Downloads"
 
-# Source utility functions
-source "${INSTALL_DIR}/lib/utils.sh"
+# Source utility functions with correct environment
+sudo -E -u "$SUDO_USER" bash -c "source \"${INSTALL_DIR}/lib/utils.sh\""
 
-# Run system update
-log_info "Running system update before installation..."
-"$INSTALL_DIR/system-update.sh"
+# Run system update as root but with correct environment
+sudo -E bash "$INSTALL_DIR/system-update.sh"
 
 log_info "Starting Setupr installation..."
 
 # Run install.sh with preserved environment variables
-HOME="$USER_HOME" \
-USER="$SUDO_USER" \
-LOGNAME="$SUDO_USER" \
-PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin" \
 sudo -E -H -u "$SUDO_USER" bash "$INSTALL_DIR/install.sh"
