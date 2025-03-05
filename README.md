@@ -38,7 +38,7 @@
 ## Quick Start
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/v2/boot.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/v2.2/boot.sh | sudo bash
 ```
 
 ## Configuration Guide
