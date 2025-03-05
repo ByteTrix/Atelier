@@ -50,8 +50,10 @@ fi
 # Create basic vimrc configuration
 log_info "[vim] Creating basic Vim configuration..."
 VIMRC="$HOME/.vimrc"
+TEMP_VIMRC=$(mktemp)
 
-cat > "$VIMRC" << 'EOF'
+# Create configuration in temporary file
+cat > "$TEMP_VIMRC" << 'EOF'
 " vim-plug plugins
 call plug#begin('~/.vim/plugged')
 Plug 'tpope/vim-sensible'           " Sensible defaults
@@ -130,6 +132,19 @@ if empty(glob('~/.vim/plugged'))
     autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 EOF
+
+# Move configuration file to final location
+if [ -s "$TEMP_VIMRC" ]; then
+    if ! mv "$TEMP_VIMRC" "$VIMRC"; then
+        log_error "[vim] Failed to create vimrc file"
+        rm -f "$TEMP_VIMRC"
+        return 1
+    fi
+else
+    log_error "[vim] Failed to create temporary vimrc file"
+    rm -f "$TEMP_VIMRC"
+    return 1
+fi
 
 # Install plugins
 log_info "[vim] Installing Vim plugins..."

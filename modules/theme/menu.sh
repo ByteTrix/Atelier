@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 INSTALL_DIR="/usr/local/share/Setupr"
 source "${INSTALL_DIR}/lib/utils.sh"
@@ -26,7 +25,7 @@ verify_component() {
     # Check for required commands based on script content
     local required_commands=$(grep "command -v" "$script" | grep -oP "command -v \K\w+")
     for cmd in $required_commands; do
-           if ! command -v "$cmd" &>/dev/null; then
+        if ! command -v "$cmd" &>/dev/null; then
             log_warn "⚠️ Required command '$cmd' for $name is not installed"
         else
             log_info "✓ Required command '$cmd' is available"
@@ -36,9 +35,15 @@ verify_component() {
     return 0
 }
 
+# Check if gum is available
+if ! command -v gum &> /dev/null; then
+    log_error "'gum' command not found. Please install gum first."
+    return 1
+fi
+
 # Prompt for desktop customization
-if ! gum confirm "Would you like to verify GNOME desktop customization capabilities?"; then
-    exit 0
+if ! gum confirm "Would you like to verify GNOME desktop customization capabilities?" 2>/dev/null; then
+    return 0
 fi
 
 log_info "Desktop Customization Verification"
@@ -172,7 +177,7 @@ if $RUNNING_GNOME; then
     log_info "Checking GNOME Animation Settings..."
     
     # Check global animation settings
-    ANIMATIONS_ENABLED=$(gsettings get org.gnome.desktop.interface enable-animations)
+    ANIMATIONS_ENABLED=$(gsettings get org.gnome.desktop.interface enable-animations || echo "unknown")
     if [ "$ANIMATIONS_ENABLED" = "true" ]; then
         log_info "✓ GNOME system animations are enabled"
         
@@ -180,8 +185,8 @@ if $RUNNING_GNOME; then
         log_info "Checking animation components:"
         
         # Window animations
-        window_minimize=$(gsettings get org.gnome.desktop.wm.preferences action-minimize-effect 2>/dev/null)
-        log_info "  ↳ 🪟 Window minimize effect: ${window_minimize:-default}"
+        window_minimize=$(gsettings get org.gnome.desktop.wm.preferences action-minimize-effect 2>/dev/null || echo "unknown")
+        log_info "  ↳ 🪟 Window minimize effect: ${window_minimize}"
         
         # Workspace animations
         if gsettings get org.gnome.mutter workspaces-only-on-primary &>/dev/null; then
