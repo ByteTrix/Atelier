@@ -2,7 +2,7 @@
 
 ## To-Do
 
- -check docker-compose file
+ -add whatsapp icon
  -copy omakub code for most application or copy his module-template
  -3rd option create config not creating the file
  -Test all the istallation without iNSTALLING
