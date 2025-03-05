@@ -7,7 +7,7 @@
  -3rd option create config not creating the file
  -Test all the istallation without iNSTALLING
 
-![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/main/.github/assets/banner.png)
+![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/v2/.github/assets/banner.png)
 
 ## Features
 
@@ -37,7 +37,7 @@
 ## Quick Start
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/main/boot.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/v2/boot.sh | sudo bash
 ```
 
 ## Configuration Guide
