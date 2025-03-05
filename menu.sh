@@ -248,7 +248,15 @@ show_summary_and_install() {
             gum style --border double --align center --width $((TERM_WIDTH - 20)) --padding "1 2" \
                 "$(gum style --foreground 196 "❌ Installation failed!")"
         fi
-        gum input --placeholder "Press Enter to exit..." --cursor.foreground 212
+
+        # Wait for user to type 'sayonara'
+        while true; do
+            input=$(gum input --placeholder "Type 'sayonara' to exit..." --cursor.foreground 212)
+            if [[ "${input,,}" == "sayonara" ]]; then
+                break
+            fi
+            gum style --foreground 196 "Please type 'sayonara' to exit"
+        done
         exit 0
     fi
 }
