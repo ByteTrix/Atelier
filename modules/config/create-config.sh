@@ -45,45 +45,48 @@ save_config() {
     local config_name="$1"
     local config_file="$CONFIG_DIR/setupr-${config_name}.json"
     
+    # Validate write permissions
+    if ! touch "$config_file" 2>/dev/null; then
+        log_error "Cannot write to $config_file. Please check permissions."
+        return 1
+    fi
+
+    # Collect all selected scripts
+    local packages=()
+    for section in "${!SELECTIONS[@]}"; do
+        if [ -n "${SELECTIONS[$section]}" ]; then
+            while IFS='|' read -r desc script; do
+                if [ -n "$script" ]; then
+                    packages+=("$script")
+                fi
+            done <<< "${SELECTIONS[$section]}"
+        fi
+    done
+
     # Create JSON configuration
     {
         echo "{"
         echo "  \"name\": \"$config_name\","
         echo "  \"created\": \"$(date -Iseconds)\","
-        echo "  \"selections\": {"
+        echo "  \"description\": \"Custom configuration created with Setupr\","
+        echo "  \"packages\": ["
         
         local first=true
-        local first_item
-        for section in "${!SELECTIONS[@]}"; do
-            if [ -n "${SELECTIONS[$section]}" ]; then
-                if [ "$first" = true ]; then
-                    first=false
-                else
-                    echo "    },"
-                fi
-                echo "    \"$section\": {"
-                
-                first_item=true
-                while IFS='|' read -r desc script; do
-                    if [ -n "$desc" ]; then
-                        if [ "$first_item" = true ]; then
-                            first_item=false
-                        else
-                            echo ","
-                        fi
-                        echo -n "      \"$script\": \"$desc\""
-                    fi
-                done <<< "${SELECTIONS[$section]}"
-                echo
+        for package in "${packages[@]}"; do
+            if [ "$first" = true ]; then
+                first=false
+            else
+                echo ","
             fi
+            echo -n "    \"$package\""
         done
-        
-        if [ "$first" = false ]; then
-            echo "    }"
-        fi
-        echo "  }"
+        echo
+        echo "  ]"
         echo "}"
-    } > "$config_file"
+    } > "$config_file" || {
+        log_error "Failed to write configuration to $config_file"
+        return 1
+    }
     
     log_success "Configuration saved to: $config_file"
 }

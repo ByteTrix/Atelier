@@ -7,8 +7,6 @@
 # Author: Atelier Team
 # License: MIT
 
-set -euo pipefail
-
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/../../lib/utils.sh"
 
@@ -32,5 +30,5 @@ if command -v telegram-desktop &> /dev/null; then
     telegram-desktop --version
 else
     log_error "[telegram] Installation failed"
-    exit 1
+    return 1
 fi

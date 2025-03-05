@@ -7,50 +7,61 @@
 # Author: Atelier Team
 # License: MIT
 
-set -euo pipefail
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-INSTALL_DIR="/usr/local/share/Setupr"
-source "${INSTALL_DIR}/lib/utils.sh"
-
-log_info "[browsers/zen] Checking if Zen Browser is already installed..."
-
+# Check if Zen Browser is already installed
 if command -v zen-browser &>/dev/null; then
-    log_info "[browsers/zen] Zen Browser is already installed"
-    
-    # Display version info if available
+    log_warn "[browsers/zen] Zen Browser is already installed"
     if zen-browser --version &>/dev/null; then
         INSTALLED_VERSION=$(zen-browser --version | head -n1)
         log_info "[browsers/zen] Installed version: $INSTALLED_VERSION"
     fi
-    exit 0
+    return 0
 fi
 
 log_info "[browsers/zen] Installing Zen Browser..."
 
+# Create keyrings directory
+sudo_exec mkdir -p /usr/share/keyrings
+
 # Add the Zen Browser repository key
 log_info "[browsers/zen] Adding repository key..."
-if ! curl -fsSL https://download.opensuse.org/repositories/home:/Zen/xUbuntu_22.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/zen-browser.gpg > /dev/null; then
+if ! curl -fsSL https://download.opensuse.org/repositories/home:/Zen/xUbuntu_22.04/Release.key | sudo_exec gpg --dearmor -o /usr/share/keyrings/zen-browser-archive-keyring.gpg; then
     log_error "[browsers/zen] Failed to add repository key"
-    exit 1
+    return 1
 fi
 
 # Add the repository
 log_info "[browsers/zen] Adding repository source..."
-echo "deb https://download.opensuse.org/repositories/home:/Zen/xUbuntu_22.04/ /" | sudo tee /etc/apt/sources.list.d/zen-browser.list
+if ! echo "deb [signed-by=/usr/share/keyrings/zen-browser-archive-keyring.gpg] https://download.opensuse.org/repositories/home:/Zen/xUbuntu_22.04/ /" | sudo_exec tee /etc/apt/sources.list.d/zen-browser.list > /dev/null; then
+    log_error "[browsers/zen] Failed to add repository"
+    return 1
+fi
 
 # Update package lists
 log_info "[browsers/zen] Updating package lists..."
-if ! sudo apt update; then
+if ! sudo_exec apt-get update; then
     log_error "[browsers/zen] Failed to update package lists"
-    exit 1
+    return 1
 fi
 
 # Install Zen Browser
 log_info "[browsers/zen] Installing Zen Browser package..."
-if ! sudo apt install -y zen-browser; then
+if ! sudo_exec apt-get install -y zen-browser; then
     log_error "[browsers/zen] Failed to install Zen Browser"
-    exit 1
+    return 1
 fi
 
-log_info "[browsers/zen] Zen Browser installed successfully"
-log_info "[browsers/zen] Run 'zen-browser' to launch the browser"
+# Verify installation
+if command -v zen-browser &>/dev/null; then
+    log_success "[browsers/zen] Zen Browser installed successfully"
+    if zen-browser --version &>/dev/null; then
+        INSTALLED_VERSION=$(zen-browser --version | head -n1)
+        log_info "[browsers/zen] Installed version: $INSTALLED_VERSION"
+    fi
+    return 0
+else
+    log_error "[browsers/zen] Zen Browser installation could not be verified"
+    return 1
+fi

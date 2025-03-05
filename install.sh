@@ -9,8 +9,27 @@
 
 set -euo pipefail
 
+# Parse command line arguments
+DRY_RUN=0
+for arg in "$@"; do
+    case $arg in
+        --dry-run)
+            DRY_RUN=1
+            shift
+            ;;
+    esac
+done
+
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/lib/utils.sh"
+
+# Print dry run banner if enabled
+if [ "$DRY_RUN" -eq 1 ]; then
+    gum style \
+        --foreground 214 --bold --border-foreground 214 --border thick \
+        --align center --width 50 --margin "1 2" \
+        "🔍 DRY RUN MODE - No changes will be made"
+fi
 
 # Temporary files for configuration and selected scripts
 CONFIG_TEMP="/tmp/setupr_config_temp.json"
@@ -284,20 +303,77 @@ else
   exit 1
 fi
 
-# Execute all selected scripts
-log_info "Bulk executing selected modules..."
+# Execute or simulate all selected scripts
+if [ "$DRY_RUN" -eq 1 ]; then
+    print_section "🔍 Installation Simulation"
+    log_info "The following modules would be installed:"
+    
+    while IFS= read -r script; do
+        if [ -n "$script" ]; then
+            module_name=$(basename "$script" .sh)
+            category=$(dirname "$script" | grep -oP "modules/\K[^/]+")
+            gum style --foreground 99 "  [$category] Would install: $module_name"
+            
+            # Test script for syntax errors
+            if bash -n "$script"; then
+                echo "  ✓ Script validation passed" | gum style --foreground 82
+            else
+                echo "  ✗ Script validation failed" | gum style --foreground 196
+            fi
+        fi
+    done < "$SELECTED_SCRIPTS_FILE"
+    
+    log_info "Dry run completed. No changes were made."
+else
+    # Real execution mode
+    log_info "Bulk executing selected modules..."
+    
+    # Export sudo functions for child processes
+    export -f sudo_exec
+    export SETUPR_SUDO=1
+    
+    # Track installation results
+    declare -A install_results
+    failed_installs=0
 
-# Export sudo functions for child processes
-export -f sudo_exec
-export SETUPR_SUDO=1
+    while IFS= read -r script; do
+        if [ -n "$script" ]; then
+            script_name=$(basename "$script" .sh)
+            category=$(dirname "$script" | grep -oP "modules/\K[^/]+")
+            log_info "[$category] Installing $script_name..."
+            
+            # Execute script in subshell to prevent it from stopping the main process
+            if (set +e; source "${SCRIPT_DIR}/lib/utils.sh" && bash "$script"); then
+                install_results["$script_name"]="✓ Success"
+                log_success "[$category] Successfully installed $script_name"
+            else
+                install_status=$?
+                install_results["$script_name"]="✗ Failed (exit code: $install_status)"
+                log_error "[$category] Failed to install $script_name (exit code: $install_status)"
+                ((failed_installs++))
+            fi
+            
+            # Small delay to ensure log readability
+            sleep 1
+        fi
+    done < "$SELECTED_SCRIPTS_FILE"
 
-while IFS= read -r script; do
-  if [ -n "$script" ]; then
-    log_info "Executing $script..."
-    # Source utils.sh in subshell to ensure sudo functions are available
-    (source "${SCRIPT_DIR}/lib/utils.sh" && bash "$script")
-  fi
-done < "$SELECTED_SCRIPTS_FILE"
+    # Print installation summary
+    print_section "Installation Summary"
+    for script_name in "${!install_results[@]}"; do
+        if [[ ${install_results[$script_name]} == *"Success"* ]]; then
+            gum style --foreground 82 "  $script_name: ${install_results[$script_name]}"
+        else
+            gum style --foreground 196 "  $script_name: ${install_results[$script_name]}"
+        fi
+    done
+
+    if [ $failed_installs -gt 0 ]; then
+        log_warn "$failed_installs installation(s) failed. Check the logs above for details."
+    else
+        log_success "All installations completed successfully!"
+    fi
+fi
 
 # Cleanup temporary files
 rm -f "$SELECTED_SCRIPTS_FILE"

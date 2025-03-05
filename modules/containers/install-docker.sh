@@ -15,8 +15,6 @@
 # Author: ByteTrix
 # License: MIT
 
-set -euo pipefail
-
 # Module constants
 readonly MODULE_NAME="docker"
 readonly REQUIRED_COMMANDS=(curl gpg lsb_release)
@@ -176,19 +174,19 @@ main() {
     # Check system compatibility
     if ! check_system_compatibility; then
         log_error "System compatibility check failed"
-        exit 1
+        return 1
     fi
     
     # Setup repository
     if ! setup_repository; then
         log_error "Failed to setup Docker repository"
-        exit 1
+        return 1
     fi
     
     # Install Docker
     if ! install_docker; then
         log_error "Docker installation failed"
-        exit 1
+        return 1
     fi
     
     # Configure Docker
@@ -199,11 +197,12 @@ main() {
     # Verify installation
     if ! verify_installation; then
         log_error "Docker installation verification failed"
-        exit 1
+        return 1
     fi
     
-    log_info "Docker installation completed successfully!"
+    log_success "Docker installation completed successfully!"
     log_info "NOTE: You may need to log out and back in for group changes to take effect"
+    return 0
 }
 
 # Run main function

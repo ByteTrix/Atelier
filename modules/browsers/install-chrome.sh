@@ -180,19 +180,19 @@ main() {
     # Check system compatibility
     if ! check_system_compatibility; then
         log_error "System compatibility check failed"
-        exit 1
+        return 1
     fi
     
     # Setup repository
     if ! setup_repository; then
         log_error "Repository setup failed"
-        exit 1
+        return 1
     fi
     
     # Install Chrome
     if ! install_chrome; then
         log_error "Chrome installation failed"
-        exit 1
+        return 1
     fi
     
     # Configure Chrome
@@ -203,7 +203,7 @@ main() {
     # Verify installation
     if ! verify_installation; then
         log_error "Installation verification failed"
-        exit 1
+        return 1
     fi
     
     log_success "Google Chrome installation completed successfully!"

@@ -7,35 +7,51 @@
 # Author: Atelier Team
 # License: MIT
 
-set -euo pipefail
-
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/../../lib/utils.sh"
 
-log_info "[vim] Installing and configuring Vim..."
-
-# Install Vim if not present
-if ! command -v vim &> /dev/null; then
-    log_info "[vim] Installing Vim..."
-    sudo apt-get update
-    sudo apt-get install -y vim vim-gtk3
+# Check if Vim is already installed
+if command -v vim &>/dev/null; then
+    log_warn "[vim] Vim is already installed"
+    vim --version | head -n1
 else
-    log_info "[vim] Vim is already installed, proceeding with configuration..."
+    log_info "[vim] Installing Vim..."
+    
+    # Update package lists
+    if ! sudo_exec apt-get update; then
+        log_error "[vim] Failed to update package lists"
+        return 1
+    fi
+    
+    # Install Vim
+    if ! sudo_exec apt-get install -y vim vim-gtk3; then
+        log_error "[vim] Failed to install Vim"
+        return 1
+    fi
 fi
 
-# Create vim configuration directory
-mkdir -p "$HOME/.vim/"{bundle,colors,autoload}
+# Create vim configuration directories
+log_info "[vim] Creating configuration directories..."
+if ! mkdir -p "$HOME/.vim/"{bundle,colors,autoload}; then
+    log_error "[vim] Failed to create Vim configuration directories"
+    return 1
+fi
 
 # Download and install vim-plug
 if [ ! -f "$HOME/.vim/autoload/plug.vim" ]; then
     log_info "[vim] Installing vim-plug plugin manager..."
-    curl -fLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
-        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    if ! curl -fLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
+        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim; then
+        log_error "[vim] Failed to install vim-plug"
+        return 1
+    fi
 fi
 
 # Create basic vimrc configuration
 log_info "[vim] Creating basic Vim configuration..."
-cat > "$HOME/.vimrc" << 'EOF'
+VIMRC="$HOME/.vimrc"
+
+cat > "$VIMRC" << 'EOF'
 " vim-plug plugins
 call plug#begin('~/.vim/plugged')
 Plug 'tpope/vim-sensible'           " Sensible defaults
@@ -117,9 +133,17 @@ EOF
 
 # Install plugins
 log_info "[vim] Installing Vim plugins..."
-vim +PlugInstall +qall
+if ! vim +PlugInstall +qall &>/dev/null; then
+    log_warn "[vim] Plugin installation may have had issues"
+fi
 
-log_success "[vim] Vim installation and configuration complete!"
+# Verify configuration
+if [ -f "$VIMRC" ] && [ -s "$VIMRC" ]; then
+    log_success "[vim] Vim configuration created successfully"
+else
+    log_error "[vim] Vim configuration creation failed"
+    return 1
+fi
 
 # Display help information
 log_info "[vim] Quick start guide:"
@@ -145,10 +169,12 @@ For more information:
 - Type ':help' in Vim for built-in documentation
 "
 
-# Verify installation
-if command -v vim &> /dev/null; then
-    log_info "[vim] Vim installation verified."
+# Verify installation and show version
+if command -v vim &>/dev/null; then
+    log_success "[vim] Installation completed successfully"
     vim --version | head -n1
+    return 0
 else
-    log_error "[vim] Vim installation could not be verified."
+    log_error "[vim] Vim installation could not be verified"
+    return 1
 fi

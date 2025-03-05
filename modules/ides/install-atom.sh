@@ -8,46 +8,75 @@
 # Author: Atelier Team
 # License: MIT
 
-set -euo pipefail
-
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "${SCRIPT_DIR}/../../lib/utils.sh"
+
+# Check if Atom is already installed
+if command -v atom &>/dev/null; then
+    log_warn "[atom] Atom is already installed"
+    atom --version
+    return 0
+fi
 
 log_info "[atom] Installing Atom text editor..."
 
 # Display sunset warning
 log_warn "[atom] Note: Atom has been sunset by GitHub. Installing last available version."
 
-# Check if Atom is already installed
-if ! command -v atom &> /dev/null; then
-    # Create temporary directory
-    TEMP_DIR=$(mktemp -d)
-    
-    # Download last available Atom .deb package
-    log_info "[atom] Downloading Atom package..."
-    wget -O "$TEMP_DIR/atom.deb" "https://github.com/atom/atom/releases/download/v1.60.0/atom-amd64.deb"
-    
-    # Install dependencies
-    log_info "[atom] Installing dependencies..."
-    sudo apt-get update
-    sudo apt-get install -y gconf2 gconf-service libgtk2.0-0 libudev1 libgcrypt20 \
-                           notification-daemon libnotify4 libxtst6 libnss3 python \
-                           gvfs-bin xdg-utils libx11-xcb1 libxss1 libasound2 libxkbfile1
-    
-    # Install Atom package
-    log_info "[atom] Installing Atom package..."
-    sudo dpkg -i "$TEMP_DIR/atom.deb"
-    sudo apt-get install -f
-    
-    # Clean up
+# Create temporary directory
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR" || {
+    log_error "[atom] Failed to create temporary directory"
+    return 1
+}
+
+# Download last available Atom .deb package
+log_info "[atom] Downloading Atom package..."
+if ! wget -O atom.deb "https://github.com/atom/atom/releases/download/v1.60.0/atom-amd64.deb"; then
+    log_error "[atom] Failed to download Atom package"
     rm -rf "$TEMP_DIR"
-    
-    # Create initial configuration directory
-    mkdir -p "$HOME/.atom"
-    
-    # Create basic configuration
-    log_info "[atom] Creating basic configuration..."
-    cat > "$HOME/.atom/config.cson" << 'EOF'
+    return 1
+fi
+
+# Install dependencies
+log_info "[atom] Installing dependencies..."
+if ! sudo_exec apt-get update || ! sudo_exec apt-get install -y gconf2 gconf-service libgtk2.0-0 libudev1 libgcrypt20 \
+    notification-daemon libnotify4 libxtst6 libnss3 python \
+    gvfs-bin xdg-utils libx11-xcb1 libxss1 libasound2 libxkbfile1; then
+    log_error "[atom] Failed to install dependencies"
+    rm -rf "$TEMP_DIR"
+    return 1
+fi
+
+# Install Atom package
+log_info "[atom] Installing Atom package..."
+if ! sudo_exec dpkg -i "$TEMP_DIR/atom.deb"; then
+    if ! sudo_exec apt-get install -f -y; then
+        log_error "[atom] Failed to install Atom dependencies"
+        rm -rf "$TEMP_DIR"
+        return 1
+    fi
+    # Try installing again after fixing dependencies
+    if ! sudo_exec dpkg -i "$TEMP_DIR/atom.deb"; then
+        log_error "[atom] Failed to install Atom package"
+        rm -rf "$TEMP_DIR"
+        return 1
+    fi
+fi
+
+# Clean up
+cd - &>/dev/null || true
+rm -rf "$TEMP_DIR"
+
+# Create initial configuration directory
+if ! mkdir -p "$HOME/.atom"; then
+    log_warn "[atom] Failed to create configuration directory"
+fi
+
+# Create basic configuration
+log_info "[atom] Creating basic configuration..."
+CONFIG_FILE="$HOME/.atom/config.cson"
+cat > "$CONFIG_FILE" << 'EOF' || {
 "*":
   core:
     telemetryConsent: "no"
@@ -65,8 +94,13 @@ if ! command -v atom &> /dev/null; then
   welcome:
     showOnStartup: false
 EOF
+    log_warn "[atom] Failed to create configuration file"
+}
 
-    log_success "[atom] Atom text editor installed successfully!"
+# Verify installation
+if command -v atom &>/dev/null; then
+    log_success "[atom] Atom text editor installed successfully"
+    atom --version
     
     # Display help information
     log_info "[atom] Quick start guide:"
@@ -83,14 +117,8 @@ EOF
     
     # Display sunset notice again
     log_warn "[atom] Remember: Atom is no longer actively maintained. Consider alternatives like VS Code or Sublime Text for long-term use."
+    return 0
 else
-    log_warn "[atom] Atom is already installed."
-fi
-
-# Verify installation
-if command -v atom &> /dev/null; then
-    log_info "[atom] Atom installation verified."
-    atom --version
-else
-    log_error "[atom] Atom installation could not be verified."
+    log_error "[atom] Atom installation could not be verified"
+    return 1
 fi
