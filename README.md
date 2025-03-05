@@ -2,10 +2,11 @@
 
 ## To-Do
 
- -add whatsapp icon
- -copy omakub code for most application or copy his module-template
- -3rd option create config not creating the file
- -Test all the istallation without iNSTALLING
+  -add whatsapp and its icon
+  -add some custom config for specific pkgs and theme options
+  -add a box says some installations failed because if one pkg failed the prompt says installation failed
+  -change the readme file
+  -Test all the installation without INSTALLING
 
 ![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/v2/.github/assets/banner.png)
 
