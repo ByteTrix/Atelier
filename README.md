@@ -1,205 +1,181 @@
-Setupr - Modern Terminal Package Manager
+# Setupr
 
-A sleek, efficient terminal UI package manager for Linux systems that combines powerful functionality with an intuitive interface. Setupr provides a modern experience for managing software while respecting terminal space constraints.
+## To-Do
 
-<img alt="Setupr" src="https://img.shields.io/badge/Setupr-v0.1.0-blue">
-<img alt="Python" src="https://img.shields.io/badge/Python-3.7+-green">
-<img alt="License" src="https://img.shields.io/badge/License-MIT-yellow">
+ -check docker-compose file
+ -copy omakub code for most application or copy his module-template
+ -3rd option create config not creating the file
+ -Test all the istallation without iNSTALLING
+
+![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/main/.github/assets/banner.png)
 
 ## Features
-🚀 Space-Efficient Design - Maximizes visibility of packages and information
-🔍 Powerful Search - Find packages instantly with real-time filtering
-📊 Smart Organization - Logical categorization of packages
-🔄 Real-time Updates - See installation progress as it happens
-📱 Responsive Layout - Works well on various terminal sizes
-🌈 Visual Indicators - Clear status and selection feedback
-🖥️ Terminal Integration - View actual command output during operations
-🌐 Cross-Distribution - Works on various Linux distributions
 
+- 🚀 **Two Installation Modes**:
+  - **Automatic (Beginner Mode)**: Quick setup with recommended defaults
+  - **Advanced (Interactive Mode)**: Full control over tool selection
 
-## Interface Layout
+- 💾 **Configuration Management**:
+  - Auto-save configs to your Downloads folder
+  - Upload existing configs from Downloads
+  - Share configurations between machines
+  - Version-controlled setups (`setupr_config_YYYYMMDD_HHMMSS.json`)
 
-```bash
-┌─────────────┬──────────────────────────────────┬─────────────────────────────┐
-│ Setupr      │               [🔍 Search...]     │         🌙 ⚙️ ❔            │
-├─────────────┬──────────────────────────────────┼─────────────────────────────┤
-│ CATEGORIES  │ ▲                                │ DETAILS                     │
-├─────────────┤ ►VS Code     1.85.1    65MB [4.5]│                             │
-│ ● Featured  │ ○PyCharm     2023.2   450MB [4.5]│ VS Code                     │
-│ ○ Developer │ ○Sublime     4.0       20MB [4.0]│ Version: 1.85.1             │
-│ ○ Graphics  │ ○Atom        1.60.0   120MB [3.5]│                             │
-│ ○ Internet  │ ○Neovim      0.9.1     15MB [5.0]│ Modern code editor with     │
-│ ○ Office    │ ○Emacs       28.2      35MB [4.5]│ intelligent features,       │
-│ ○ Media     │ ○Kate        22.12.3   18MB [3.5]│ syntax highlighting,        │
-│ ○ System    │ ○Geany       2.0       12MB [4.0]│ and Git integration.        │
-│             │ ○Brackets    2.1       80MB [3.5]│                             │
-│ FILTERS     │ ○Gedit       44.0      10MB [3.0]│ Size: 65MB                  │
-├─────────────┤ ○Eclipse     4.26     300MB [3.5]│ Rating: 4.5/5               │
-│ ☑ Free      │ ○WebStorm    2023.2   400MB [4.5]│                             │
-│ ☐ Propriet. │ ▼                                │ [      INSTALL      ]       │
-│ ☑ Installed │                                  │                             │
-│ ☑ Updates   │                                  ├─────────────────────────────┤
-│             │ STATUS: Installing VS Code...    │ TERMINAL                    │
-│ SORT BY     │ ████████▒▒ 80% - Downloading     │                             │
-├─────────────┤                                  │ $ apt-get install code      │
-│ • Popular   │                                  │                             │
-│ ○ A-Z       │                                  │ Fetching dependencies...    │
-│ ○ Size      │                                  │ Processing triggers... ▋    │
-└─────────────┴──────────────────────────────────┴─────────────────────────────┘
-```
+- 🛠️ **Comprehensive Tool Categories**:
+  - Programming Languages (Python, Node.js, Go, Rust, Ruby)
+  - IDEs & Text Editors (VS Code, Emacs, etc.)
+  - CLI Tools (zoxide, fzf, ripgrep, etc.)
+  - Containers (Docker, kubectl)
+  - Browsers (Chrome, Firefox, Brave)
+  - Productivity Apps (Notion, Obsidian, VLC, Xournal++, Localsend, WhatsApp, Spotify, Dropbox, Todoist, Telegram, Ulauncher, Syncthing)
+  - Development Tools
 
-## Design Philosophy
+- ⚡ **Enhanced Installation Experience**:
+  - Parallel execution and progress tracking for installations
+  - Interactive menus with more options for users
 
-Setupr's interface is crafted with these core principles:
-
-1. **Information Density** - Show more packages while maintaining readability
-2. **Visual Clarity** - Clear indicators for selection, status, and progress
-3. **Contextual Details** - Package information appears when needed
-4. **Efficient Navigation** - Quick keyboard shortcuts for fast workflow
-5. **Real-time Feedback** - See what's happening as it happens
-
-## Installation
+## Quick Start
 
 ```bash
-# Install from PyPI
-pip install setupr
-
-# Or install development version
-git clone https://github.com/username/setupr.git
-cd setupr
-pip install -e .
+wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/main/boot.sh | sudo bash
 ```
 
-## Usage
+## Configuration Guide
 
-Launch the application:
+### Creating a New Configuration
 
-```bash
-setupr
+1. Run the installer:
+   ```bash
+   ./install.sh
+   ```
+
+2. Choose your installation mode and select tools
+3. Your configuration will be automatically saved to:
+   ```
+   ~/Downloads/setupr_config_YYYYMMDD_HHMMSS.json
+   ```
+
+### Using an Existing Configuration
+
+1. Place your configuration file in your Downloads folder
+2. Run the installer:
+   ```bash
+   ./install.sh
+   ```
+3. Select "Yes" when asked "Do you want to upload a configuration file?"
+4. Choose your configuration from the list
+
+### Configuration File Format
+
+Configurations are saved as JSON files:
+```json
+{
+  "mode": "Advanced (Full Interactive Mode)",
+  "timestamp": "2025-03-04T14:54:11Z",
+  "packages": [
+    "languages/python",
+    "languages/nodejs",
+    "cli/ripgrep",
+    "browsers/chrome"
+  ]
+}
 ```
 
-### Keyboard Shortcuts
+### Sharing Configurations
 
-| Key      | Action                   |
-|----------|--------------------------|
-| `/` or `s` | Focus search           |
-| `↑` / `↓`  | Navigate package list  |
-| `Enter`    | Select package         |
-| `i`        | Install selected       |
-| `u`        | Update selected        |
-| `r`        | Remove selected        |
-| `Tab`      | Switch panes           |
-| `t`        | Toggle theme           |
-| `f`        | Toggle filters         |
-| `q`        | Quit application       |
-| `?`        | Show help              |
+1. Find your saved configuration in `~/Downloads/setupr_config_*.json`
+2. Share the file with team members
+3. They can place it in their Downloads folder
+4. Run Setupr and select the configuration when prompted
 
-## Package Management Features
+## Installation Options
 
-- **Smart Dependency Resolution** - Automatically handles dependencies
-- **Conflict Detection** - Identifies and resolves package conflicts
-- **Multiple Sources** - Install from repositories, Flatpaks, and more
-- **Package Health** - Shows popularity, update frequency, and ratings
-- **History Tracking** - Records installation and update history
-- **System Integration** - Respects system package manager preferences
+### Programming Languages
+- Python 3 with pip and venv
+- Node.js and npm
+- Go
+- Rust (via rustup)
+- Ruby and Bundler
 
-## Technical Details
+### CLI Tools
+- Zoxide (Enhanced cd)
+- Fd (Improved file search)
+- Ripgrep (Fast code search)
+- Tree (Directory viewer)
+- And many more...
 
-Setupr is built using:
+### IDEs & Editors
+- Visual Studio Code
+- Emacs
+- Geany
+- IntelliJ IDEA CE
 
-- **Textual** - Rich TUI framework for Python
-- **Rich** - Terminal formatting library
-- **asyncio** - For non-blocking operations
-- **Package Manager Libraries** - Integrations with apt, dnf, pacman, etc.
+### Containers & Cloud
+- Docker
+- Docker Compose
+- kubectl
 
-## Project Structure
+### Browsers
+- Google Chrome
+- Firefox
+- Brave Browser
 
-```
-setupr/
-├── src/
-│   └── setupr/
-│       ├── __init__.py
-│       ├── main.py              # Main entry point
-│       ├── ui/
-│       │   ├── __init__.py
-│       │   ├── app.py           # Core application
-│       │   ├── widgets/         # Custom UI components
-│       │   └── styles/          # CSS styling
-│       ├── core/
-│       │   ├── __init__.py
-│       │   ├── package_manager.py
-│       │   └── backends/        # Package manager integrations
-│       └── utils/
-│           └── __init__.py
-├── tests/
-├── docs/
-├── pyproject.toml
-└── README.md
-```
+### Productivity Apps
+- Notion (All-in-one workspace)
+- Obsidian (Knowledge base & notes)
+- VLC Media Player (Versatile media player)
+- Xournal++ (Note taking & PDF annotation)
+- Localsend (Local network file sharing)
+- WhatsApp (Messaging client)
+- Spotify (Music streaming)
+- Dropbox (Cloud storage & sync)
+- Todoist (Task management)
+- Telegram (Secure messaging)
+- Ulauncher (Application launcher)
+- Syncthing (Decentralized file sync)
 
-## Development
+### Additional Tools
+- Git configurations
+- Shell enhancements
+- System utilities
+- Development tools
 
-### Requirements
+## Common Tasks
 
-- Python 3.7+
-- Textual library
-- distro library
+### Creating Team Configurations
 
-### Setup Development Environment
+1. Set up your development environment
+2. Share the generated config from Downloads
+3. Team members can use it for consistent setups
 
-```bash
-# Clone the repository
-git clone https://github.com/username/setupr.git
-cd setupr
+### Managing Multiple Configs
 
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+- Keep different configs for different projects
+- Use timestamp-based naming for version control
+- Share specific configs for different team roles
 
-# Install development dependencies
-pip install -e ".[dev]"
+### Automated Setup
 
-# Run the application in development mode
-python -m setupr --dev
-```
-
-### Running Tests
-
-```bash
-pytest tests/
-```
-
-## Distribution Support
-
-Setupr supports multiple package managers:
-
-- 📦 **apt** - Debian, Ubuntu, and derivatives
-- 📦 **dnf** - Fedora, RHEL, and derivatives
-- 📦 **pacman** - Arch Linux and derivatives
-- 📦 **zypper** - openSUSE
-- 📦 **flatpak** - Cross-distribution packages
-- 📦 **snap** - Universal Linux packages
+For automated deployments:
+1. Create a base configuration
+2. Copy to Downloads on target machine
+3. Run Setupr with the config
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please check our [Contributing Guide](CONTRIBUTING.md) for details.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Support
+
+If you encounter any issues or have questions:
+- Open an issue on GitHub
+- Join our community discussions
+- Check our documentation wiki
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgements
-
-- The Textual team for their amazing TUI framework
-- All Linux package manager developers
-- Contributors and testers who helped refine the design
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Made with ❤️ by the Kxvin
+Made with ❤️ by ByteTrix

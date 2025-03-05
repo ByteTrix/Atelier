@@ -1,0 +1,28 @@
+{
+  "name": "Recommended Setup",
+  "description": "Curated selection of essential development tools and applications",
+  "packages": [
+    "apps/install-vscode.sh",
+    "apps/install-chrome.sh",
+    "apps/install-firefox.sh",
+    "apps/install-discord.sh",
+    "apps/install-spotify.sh",
+    "apps/install-vlc.sh",
+    "cli/install-fzf.sh",
+    "cli/install-ripgrep.sh",
+    "cli/install-bat.sh",
+    "cli/install-exa.sh",
+    "cli/install-zoxide.sh",
+    "cli/install-neovim.sh",
+    "cli/install-tmux.sh",
+    "containers/install-docker.sh",
+    "containers/install-docker-compose.sh",
+    "languages/install-node.sh",
+    "languages/install-python.sh",
+    "languages/install-go.sh",
+    "theme/install-gnome-theme.sh",
+    "theme/install-gtk-themes.sh",
+    "theme/install-icon-themes.sh",
+    "theme/configure-gnome-settings.sh"
+  ]
+}
