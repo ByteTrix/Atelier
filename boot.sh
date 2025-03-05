@@ -34,25 +34,27 @@ echo -e "\nBegin installation (or abort with ctrl+c)..."
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone -b v2.2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+    git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
         echo "Error: Failed to clone repository"
         exit 1
     }
-else
-    echo "Updating Setupr..."
+    # Checkout the default branch
     cd "$INSTALL_DIR"
-    git pull origin upgrage || {
-        echo "Error: Failed to update repository"
+    git checkout "${Setupr_REF:-main}" || {
+        echo "Error: Failed to switch to branch ${Setupr_REF:-main}"
         exit 1
     }
     cd - >/dev/null
-fi
-
-# Switch to specified branch if not master
-if [[ "${Setupr_REF:-master}" != "master" ]]; then
+else
+    echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    git fetch origin "${Setupr_REF:-stable}" && git checkout "${Setupr_REF:-stable}" || {
-        echo "Error: Failed to switch to branch ${Setupr_REF:-stable}"
+    # Fetch and reset to the latest version
+    git fetch origin "${Setupr_REF:-main}" || {
+        echo "Error: Failed to fetch latest changes"
+        exit 1
+    }
+    git reset --hard "origin/${Setupr_REF:-main}" || {
+        echo "Error: Failed to update repository"
         exit 1
     }
     cd - >/dev/null
@@ -60,7 +62,7 @@ fi
 
 # Make scripts executable and set permissions
 chmod +x "$INSTALL_DIR"/{install,check-version,system-update}.sh
-chmod +x "$INSTALL_DIR"/modules/*/*.sh
+chmod +x "$INSTALL_DIR"/modules/*/*.sh 2>/dev/null || true
 chown -R ${SUDO_USER}:${SUDO_USER} "$INSTALL_DIR"
 
 # Ensure proper permissions for user configs
