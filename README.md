@@ -6,6 +6,7 @@
   -add some custom config for specific pkgs and theme options
   -add a box says some installations failed because if one pkg failed the prompt says installation failed
   -change the readme file
+  -crct the boot.sh
   -Test all the installation without INSTALLING
 
 ![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/v2/.github/assets/banner.png)
