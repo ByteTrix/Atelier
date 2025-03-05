@@ -34,26 +34,20 @@ echo -e "\nBegin installation (or abort with ctrl+c)..."
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+    git clone -b v2.2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
         echo "Error: Failed to clone repository"
         exit 1
     }
-    # Checkout the default branch
-    cd "$INSTALL_DIR"
-    git checkout "${Setupr_REF:-main}" || {
-        echo "Error: Failed to switch to branch ${Setupr_REF:-main}"
-        exit 1
-    }
-    cd - >/dev/null
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    # Fetch and reset to the latest version
-    git fetch origin "${Setupr_REF:-main}" || {
+    # Fetch all updates
+    git fetch origin || {
         echo "Error: Failed to fetch latest changes"
         exit 1
     }
-    git reset --hard "origin/${Setupr_REF:-main}" || {
+    # Reset to v2.2 branch
+    git reset --hard origin/v2.2 || {
         echo "Error: Failed to update repository"
         exit 1
     }
