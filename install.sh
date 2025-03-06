@@ -85,7 +85,7 @@ case "$MODE" in
         if bash "${SCRIPT_DIR}/menu.sh" --save-config >&2 3>"$SELECTIONS"; then
             if [ -s "$SELECTIONS" ]; then
                 REAL_USER="${SUDO_USER:-$USER}"
-                DOWNLOADS_DIR="$(getent passwd "$REAL_USER" | cut -d: -f6)/Downloads"
+                DOWNLOADS_DIR="$HOME/Downloads"
                 
                 CONFIG_NAME=$(sudo -u "$REAL_USER" gum input \
                     --placeholder "Enter configuration name (e.g., dev, media)" \
@@ -117,11 +117,7 @@ case "$MODE" in
         ;;
     "📂 Load Configuration"*)
         REAL_USER="${SUDO_USER:-$USER}"
-        DOWNLOADS_DIR="$(getent passwd "$REAL_USER" | cut -d: -f6)/Downloads"
-        
-        # Ensure Downloads directory exists with proper permissions
-        mkdir -p "$DOWNLOADS_DIR"
-        chown "$REAL_USER:$REAL_USER" "$DOWNLOADS_DIR"
+        DOWNLOADS_DIR="$HOME/Downloads"
         configs=()
 
         while IFS= read -r file; do

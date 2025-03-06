@@ -50,11 +50,16 @@ mkdir -p "${USER_HOME}/Downloads"
 chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/Downloads"
 # Preserve and set essential environment variables
 [ -n "${TERM:-}" ] && export TERM
-export HOME="$USER_HOME"
+# Export essential environment variables for proper operation
+export HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
 export USER="$SUDO_USER"
 export LOGNAME="$SUDO_USER"
 export XDG_RUNTIME_DIR="/run/user/$(id -u ${SUDO_USER})"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+
+# Create and set permissions for Downloads directory
+mkdir -p "${HOME}/Downloads"
+chown -R "${SUDO_USER}:${SUDO_USER}" "${HOME}/Downloads"
 
 # Display logo and notification
 echo -e "$ascii_art"
