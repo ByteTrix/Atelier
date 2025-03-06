@@ -5,7 +5,16 @@
 # License: MIT
 
 # Set default terminal type if not set
-[ -z "${TERM:-}" ] && export TERM=xterm-256color
+if [ -z "${TERM:-}" ]; then
+    # Try to detect terminal capabilities
+    if tput longname >/dev/null 2>&1; then
+        # Use detected terminal type
+        :
+    else
+        # Fall back to basic terminal type that works everywhere
+        export TERM=dumb
+    fi
+fi
 
 set -euo pipefail
 
