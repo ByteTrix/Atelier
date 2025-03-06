@@ -1,183 +1,180 @@
 # Setupr
 
-## To-Do
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-  -add whatsapp and its icon
-  -add some custom config for specific pkgs and theme options
-  -add a box says some installations failed because if one pkg failed the prompt says installation failed
-  -change the readme file
-  -crct the boot.sh
-  -Test all the installation without INSTALLING
+> 🚀 Fast, flexible, Set up your entire development workspace in minutes, not hours.
+.
 
 ![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/v2/.github/assets/banner.png)
 
-## Features
+## 🌟 Why Setupr?
 
-- 🚀 **Two Installation Modes**:
-  - **Automatic (Beginner Mode)**: Quick setup with recommended defaults
-  - **Advanced (Interactive Mode)**: Full control over tool selection
+Setupr provides a streamlined, interactive way to set up your Linux development environment. With parallel installations and smart configuration management, you can get your workspace ready in minutes.
 
-- 💾 **Configuration Management**:
-  - Auto-save configs to your Downloads folder
-  - Upload existing configs from Downloads
-  - Share configurations between machines
-  - Version-controlled setups (`setupr_config_YYYYMMDD_HHMMSS.json`)
+### Key Highlights
 
-- 🛠️ **Comprehensive Tool Categories**:
-  - Programming Languages (Python, Node.js, Go, Rust, Ruby)
-  - IDEs & Text Editors (VS Code, Emacs, etc.)
-  - CLI Tools (zoxide, fzf, ripgrep, etc.)
-  - Containers (Docker, kubectl)
-  - Browsers (Chrome, Firefox, Brave)
-  - Productivity Apps (Notion, Obsidian, VLC, Xournal++, Localsend, WhatsApp, Spotify, Dropbox, Todoist, Telegram, Ulauncher, Syncthing)
-  - Development Tools
+- **🎯 Interactive UI**: Beautiful terminal interface powered by `gum`
+- **⚡ Parallel Processing**: Fast, concurrent package installations
+- **🔄 Config Management**: Save and share your workspace setups
+- **🎨 Multiple Modes**: Auto-install or pick your tools
 
-- ⚡ **Enhanced Installation Experience**:
-  - Parallel execution and progress tracking for installations
-  - Interactive menus with more options for users
-
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/v2.2/boot.sh | sudo bash
 ```
 
-## Configuration Guide
+## 💫 Installation Modes
 
-### Creating a New Configuration
+1. **🚀 Auto Install (Recommended)**
+   - Uses curated defaults from recommended-config.json
+   - Perfect for quick setups
 
-1. Run the installer:
-   ```bash
-   ./install.sh
-   ```
+2. **🔨 Interactive Installation**
+   - Choose your tools through an interactive menu
+   - Full control over selections
 
-2. Choose your installation mode and select tools
-3. Your configuration will be automatically saved to:
-   ```
-   ~/Downloads/setupr_config_YYYYMMDD_HHMMSS.json
-   ```
+3. **⚙️ Save Configuration**
+   - Create custom configurations
+   - Export to JSON for team sharing
 
-### Using an Existing Configuration
+4. **📂 Load Configuration**
+   - Import existing configurations
+   - Perfect for team standardization
 
-1. Place your configuration file in your Downloads folder
-2. Run the installer:
-   ```bash
-   ./install.sh
-   ```
-3. Select "Yes" when asked "Do you want to upload a configuration file?"
-4. Choose your configuration from the list
+## 📦 Available Categories
 
-### Configuration File Format
+### 👨‍💻 Development Languages
+- Python Development Suite
+- Node.js Development Stack
+- Java Development Kit (JDK)
+- Ruby Development Tools
+- Go Programming Language
+- Rust Development Tools
+- PHP Development Stack
+- Perl Programming Suite
+- Swift Development Tools
+- Kotlin Development Kit
 
-Configurations are saved as JSON files:
+### 🛠️ Code Editors & IDEs
+- Visual Studio Code
+- Sublime Text
+- NeoVim
+- PyCharm Community
+- IntelliJ IDEA Community
+- Android Studio
+- Vim
+
+### 🌐 Web Browsers
+- Firefox
+- Google Chrome
+- Brave
+- Opera
+
+### ⚙️ Developer Tools
+- Docker & Docker Compose
+- Postman
+- GitKraken
+- DBeaver
+
+### 💬 Communication Apps
+- Slack
+- Discord
+- Microsoft Teams
+- Telegram
+- Signal
+
+### 🎨 Media & Creative
+- VLC Media Player
+- OBS Studio
+- GIMP
+- Inkscape
+- Kdenlive
+- Spotify
+
+### 📝 Productivity Tools
+- LibreOffice
+- Obsidian
+- Notion
+- Bitwarden
+
+### 🖥️ Command Line Tools
+- Tmux
+- Ripgrep
+- FZF
+- Bat
+- Exa
+- JQ
+- Htop
+- NCDU
+
+## ⚙️ Configuration Management
+
+### Creating New Config
+
+```bash
+./install.sh
+# Choose "⚙️ Save Configuration"
+```
+
+Your configuration is saved as:
+```
+~/Downloads/{name}-setupr.json
+```
+
+### Loading Existing Config
+
+```bash
+./install.sh
+# Choose "📂 Load Configuration"
+```
+
+### Config Format
+
 ```json
 {
-  "mode": "Advanced (Full Interactive Mode)",
-  "timestamp": "2025-03-04T14:54:11Z",
+  "name": "dev-setup",
+  "description": "Development environment configuration",
+  "timestamp": "2025-03-06 23:30:00",
   "packages": [
-    "languages/python",
-    "languages/nodejs",
-    "cli/ripgrep",
-    "browsers/chrome"
+    "python3:apt",
+    "nodejs:apt",
+    "code:vscode",
+    "docker:apt"
   ]
 }
 ```
 
-### Sharing Configurations
+## 🤝 Team Usage
 
-1. Find your saved configuration in `~/Downloads/setupr_config_*.json`
-2. Share the file with team members
-3. They can place it in their Downloads folder
-4. Run Setupr and select the configuration when prompted
+### Standardizing Environments
 
-## Installation Options
+1. Create base configuration
+2. Export {name}-setupr.json
+3. Share with team
+4. Team imports via Load Configuration
 
-### Programming Languages
-- Python 3 with pip and venv
-- Node.js and npm
-- Go
-- Rust (via rustup)
-- Ruby and Bundler
+### Best Practices
 
-### CLI Tools
-- Zoxide (Enhanced cd)
-- Fd (Improved file search)
-- Ripgrep (Fast code search)
-- Tree (Directory viewer)
-- And many more...
+- Create role-specific configs (frontend, backend, etc.)
+- Document custom configurations
+- Test configs in clean environments
+- Keep configurations version controlled
 
-### IDEs & Editors
-- Visual Studio Code
-- Emacs
-- Geany
-- IntelliJ IDEA CE
+## 🆘 Support
 
-### Containers & Cloud
-- Docker
-- Docker Compose
-- kubectl
+- 📝 [Documentation Wiki](https://github.com/ByteTrix/Setupr/wiki)
+- 💬 [Community Discussions](https://github.com/ByteTrix/Setupr/discussions)
+- 🐛 [Issue Tracker](https://github.com/ByteTrix/Setupr/issues)
 
-### Browsers
-- Google Chrome
-- Firefox
-- Brave Browser
+## 🤝 Contributing
 
-### Productivity Apps
-- Notion (All-in-one workspace)
-- Obsidian (Knowledge base & notes)
-- VLC Media Player (Versatile media player)
-- Xournal++ (Note taking & PDF annotation)
-- Localsend (Local network file sharing)
-- WhatsApp (Messaging client)
-- Spotify (Music streaming)
-- Dropbox (Cloud storage & sync)
-- Todoist (Task management)
-- Telegram (Secure messaging)
-- Ulauncher (Application launcher)
-- Syncthing (Decentralized file sync)
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Additional Tools
-- Git configurations
-- Shell enhancements
-- System utilities
-- Development tools
+## 📄 License
 
-## Common Tasks
-
-### Creating Team Configurations
-
-1. Set up your development environment
-2. Share the generated config from Downloads
-3. Team members can use it for consistent setups
-
-### Managing Multiple Configs
-
-- Keep different configs for different projects
-- Use timestamp-based naming for version control
-- Share specific configs for different team roles
-
-### Automated Setup
-
-For automated deployments:
-1. Create a base configuration
-2. Copy to Downloads on target machine
-3. Run Setupr with the config
-
-## Contributing
-
-We welcome contributions! Please check our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Support
-
-If you encounter any issues or have questions:
-- Open an issue on GitHub
-- Join our community discussions
-- Check our documentation wiki
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Made with ❤️ by ByteTrix
+Made with ❤️ by [ByteTrix](https://github.com/ByteTrix)

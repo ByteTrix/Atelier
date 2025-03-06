@@ -20,39 +20,13 @@ elif [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Setup Ubuntu repository keys
-setup_ubuntu_keys() {
-    local key_path="/usr/share/keyrings/ubuntu-archive-keyring.gpg"
-    sudo mkdir -p /root/.gnupg
-    sudo chmod 700 /root/.gnupg
-
-    if ! command -v dirmngr &>/dev/null; then
-        echo "Installing dirmngr..."
-        sudo apt-get update --allow-unauthenticated
-        sudo apt-get install -y dirmngr
-    fi
-
-    sudo rm -f "$key_path"
-    echo "Downloading Ubuntu archive key..."
-    if ! wget -qO- https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg | sudo gpg --dearmor -o "$key_path"; then
-        echo "Error: Failed to download Ubuntu archive key."
-        exit 1
-    fi
-
-    echo "Updating repository configurations..."
-    sudo sed -i -E "s|^deb http://([^[:space:]]+) ([^[:space:]]+) (.*)$|deb [signed-by=$key_path] http://\1 \2 \3|g" /etc/apt/sources.list
-    sudo sed -i -E "s|^deb-src http://([^[:space:]]+) ([^[:space:]]+) (.*)$|deb-src [signed-by=$key_path] http://\1 \2 \3|g" /etc/apt/sources.list
-    echo "Updating package lists..."
-    sudo apt-get update --allow-insecure-repositories
-}
 
 # Install dependency: gum
 install_dependencies() {
     if ! command -v gum &>/dev/null; then
         echo "Installing dependency: gum..."
-        sudo mkdir -p /etc/apt/keyrings
-        if curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg; then
-            echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | \
+        if curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo apt-key add -; then
+            echo "deb [arch=amd64] https://repo.charm.sh/apt/ * *" | \
                 sudo tee /etc/apt/sources.list.d/charm.list
             sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list.d/charm.list" \
                 -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
@@ -69,7 +43,6 @@ INSTALL_DIR="/usr/local/share/Setupr"
 USER_HOME=$(eval echo ~${SUDO_USER})
 
 # Execute setup functions
-setup_ubuntu_keys
 install_dependencies
 
 # Prepare the user environment

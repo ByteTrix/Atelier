@@ -80,9 +80,9 @@ case "$MODE" in
         fi
         ;;
     "⚙️  Save Configuration"*)
-        # Run menu.sh and capture package selections from FD 3
+        # Run menu.sh in save config mode and capture package selections from FD 3
         SELECTIONS=$(mktemp)
-        if bash "${SCRIPT_DIR}/menu.sh" >&2 3>"$SELECTIONS"; then
+        if bash "${SCRIPT_DIR}/menu.sh" --save-config >&2 3>"$SELECTIONS"; then
             if [ -s "$SELECTIONS" ]; then
                 REAL_USER="${SUDO_USER:-$USER}"
                 DOWNLOADS_DIR="/home/$REAL_USER/Downloads"

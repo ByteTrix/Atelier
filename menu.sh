@@ -8,10 +8,6 @@ set -o errexit -o nounset -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/utils.sh"
 
-# Temporary file for package selections
-TEMP_CONFIG="/tmp/setupr_temp_config.txt"
-trap 'rm -f "$TEMP_CONFIG"' EXIT INT TERM
-
 # Update terminal dimensions
 update_term_size() {
     TERM_WIDTH=$(tput cols)
@@ -131,32 +127,6 @@ show_status_bar() {
     echo "$msg"
 }
 
-# Save current selections to temp file
-save_selections() {
-    local temp_content=""
-    
-    # First, create a temporary array to store individual packages
-    local package_list=()
-    
-    # Process each selected package entry
-    for pkg in "${selected_packages[@]}"; do
-        # Split space-separated packages
-        read -ra pkg_parts <<< "$pkg"
-        for part in "${pkg_parts[@]}"; do
-            package_list+=("$part")
-        done
-    done
-
-    # Save packages to temp file
-    printf "%s\n" "${package_list[@]}" > "$TEMP_CONFIG"
-
-    # Log saved packages for verification
-    log_info "Packages to be installed:"
-    while IFS= read -r line; do
-        log_info "- $line"
-    done < "$TEMP_CONFIG"
-}
-
 # Package selection menu for a given category
 select_packages() {
     local category="$1"
@@ -235,30 +205,41 @@ show_summary_and_install() {
     done
 
     echo "$summary" | gum style --border double --align left --width $((TERM_WIDTH - 10)) --padding "1 2"
-    if gum confirm --affirmative="Install" --negative="Cancel" --default=false "Proceed with installation?"; then
-        show_header "Installing Packages"
-        save_selections
-        
-        # Run installation with live output
-        echo -e "\nStarting installation process...\n"
-        if "${SCRIPT_DIR}/install-pkg.sh" < "$TEMP_CONFIG"; then
-            gum style --border double --align center --width $((TERM_WIDTH - 20)) --padding "1 2" \
-                "$(gum style --foreground 82 "✅ Installation completed successfully!")"
-        else
-            gum style --border double --align center --width $((TERM_WIDTH - 20)) --padding "1 2" \
-                "$(gum style --foreground 196 "❌ Installation failed!")"
-        fi
-
-        # Wait for user to type 'sayonara'
-        while true; do
-            input=$(gum input --placeholder "Type 'sayonara' to exit..." --cursor.foreground 212)
-            if [[ "${input,,}" == "sayonara" ]]; then
-                break
-            fi
-            gum style --foreground 196 "Please type 'sayonara' to exit"
+    
+    # Save selected packages and output to FD 3
+    local package_list=()
+    for pkg in "${selected_packages[@]}"; do
+        read -ra pkg_parts <<< "$pkg"
+        for part in "${pkg_parts[@]}"; do
+            package_list+=("$part")
         done
+    done
+
+    if [ "$SAVE_CONFIG_MODE" -eq 1 ]; then
+        # In save config mode, just output packages and exit
+        printf "%s\n" "${package_list[@]}" >&3
         exit 0
+    else
+        # In install mode, show confirmation prompt
+        if gum confirm --affirmative="Install" --negative="Cancel" --default=false "Proceed with installation?"; then
+            show_header "Installing Packages"
+            # Output packages to FD 3 for install.sh to process
+            printf "%s\n" "${package_list[@]}" >&3
+            exit 0
+        fi
     fi
+}
+
+# Function to handle menu exit
+exit_menu() {
+    while true; do
+        input=$(gum input --placeholder "Type 'sayonara' to exit..." --cursor.foreground 212)
+        if [[ "${input,,}" == "sayonara" ]]; then
+            break
+        fi
+        gum style --foreground 196 "Please type 'sayonara' to exit"
+    done
+    exit 0
 }
 
 # Main menu function
@@ -278,9 +259,17 @@ main_menu() {
             fi
         done
         if [ "${#selected_packages[@]}" -gt 0 ]; then
-            menu_options+=("⚡ Continue to Installation (${#selected_packages[@]} items)")
+            if [ "$SAVE_CONFIG_MODE" -eq 1 ]; then
+                menu_options+=("💾 Save Configuration (${#selected_packages[@]} items)")
+            else
+                menu_options+=("⚡ Continue to Installation (${#selected_packages[@]} items)")
+            fi
         else
-            menu_options+=("⚡ Continue to Installation")
+            if [ "$SAVE_CONFIG_MODE" -eq 1 ]; then
+                menu_options+=("💾 Save Configuration")
+            else
+                menu_options+=("⚡ Continue to Installation")
+            fi
         fi
 
         # Display menu and get selection
@@ -292,13 +281,24 @@ main_menu() {
         # Clean up the selection
         choice=$(echo "$choice" | sed -E 's/ \([^)]+\)$//' | sed 's/^[^[:alnum:]]* //')
 
-        if [[ "$choice" == "Continue to Installation"* ]]; then
+        if [[ "$choice" == "Continue to Installation"* ]] || [[ "$choice" == "Save Configuration"* ]]; then
             show_summary_and_install
         else
             select_packages "$choice"
         fi
     done
 }
+
+# Parse command line arguments
+SAVE_CONFIG_MODE=0
+for arg in "$@"; do
+    case $arg in
+        --save-config)
+            SAVE_CONFIG_MODE=1
+            shift
+            ;;
+    esac
+done
 
 # Start the script
 main_menu
