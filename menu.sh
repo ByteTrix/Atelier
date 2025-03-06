@@ -10,10 +10,24 @@ source "${SCRIPT_DIR}/lib/utils.sh"
 
 # Update terminal dimensions
 update_term_size() {
-    TERM_WIDTH=$(tput cols)
-    TERM_HEIGHT=$(tput lines)
+    # Try tput first
+    if TERM_WIDTH=$(tput cols 2>/dev/null); then
+        TERM_HEIGHT=$(tput lines 2>/dev/null)
+    # Try stty next
+    elif size=$(stty size 2>/dev/null); then
+        TERM_HEIGHT=${size% *}
+        TERM_WIDTH=${size#* }
+    # Default fallback values
+    else
+        TERM_WIDTH=80
+        TERM_HEIGHT=24
+    fi
 }
+
+# Initialize dimensions
 update_term_size
+
+# Update on window size changes
 trap update_term_size WINCH
 
 # Ensure gum is installed
