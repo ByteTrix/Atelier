@@ -24,6 +24,10 @@ Setupr provides a streamlined, interactive way to set up your Linux development 
 wget -qO- https://raw.githubusercontent.com/ByteTrix/Setupr/v2.2/boot.sh | sudo bash
 ```
 
+## 📋 Project Roadmap
+
+Check our [Todo List](Todo.md) to see what features and improvements are planned for upcoming releases!
+
 ## 💫 Installation Modes
 
 1. **🚀 Auto Install (Recommended)**
