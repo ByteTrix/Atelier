@@ -20,8 +20,15 @@ set -euo pipefail
 
 # Color support detection
 setup_colors() {
-    # Only use colors if connected to a terminal
-    if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
+    # Check if tput is available and terminal supports colors
+    if command -v tput >/dev/null && tput setaf 1 >/dev/null 2>&1; then
+        RED=$(tput setaf 1)
+        YELLOW=$(tput setaf 3)
+        GREEN=$(tput setaf 2)
+        BLUE=$(tput setaf 4)
+        NC=$(tput sgr0)
+    # Fallback to ANSI escape codes if tput not available
+    elif [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
         RED='\033[0;31m'
         YELLOW='\033[1;33m'
         GREEN='\033[0;32m'
