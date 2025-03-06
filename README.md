@@ -1,11 +1,11 @@
-# Setupr
+<p align="center">
+  <img src="assets/banner.png" alt="Setupr Banner">
+</p>
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
 > 🚀 Fast, flexible, Set up your entire development workspace in minutes, not hours.
 .
-
-![Setupr Banner](assets/banner.png)
 
 ## 🌟 Why Setupr?
 
