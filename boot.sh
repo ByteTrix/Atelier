@@ -63,10 +63,10 @@ echo "Begin installation (ctrl+c to abort)..."
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+    if ! git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"; then
         echo "Error: Failed to clone repository."
         exit 1
-    }
+    fi
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
@@ -75,10 +75,10 @@ else
         echo "Error: Failed to fetch updates."
         exit 1
     fi
-    git reset --hard origin/v2.2 || {
+    if ! git reset --hard origin/v2.2; then
         echo "Error: Failed to update repository."
         exit 1
-    }
+    fi
     cd - >/dev/null
 fi
 
