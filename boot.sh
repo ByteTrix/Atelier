@@ -1,82 +1,117 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ASCII art for Setupr logo
+# Professional ASCII Art for Setupr Logo
 ascii_art='
-
 ███████╗███████╗████████╗██╗   ██╗██████╗ ██████╗ 
 ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔══██╗
 ███████╗█████╗     ██║   ██║   ██║██████╔╝██████╔╝
 ╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝ ██╔══██╗
 ███████║███████╗   ██║   ╚██████╔╝██║     ██║  ██║
 ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝  ╚═╝
-
 '
 
-# Check for proper sudo usage
+# Ensure the script is run with sudo (not directly as root)
 if [ "$EUID" -eq 0 ] && [ -z "${SUDO_USER:-}" ]; then
-    echo "Error: Please run with sudo, not as root directly"
+    echo "Error: Run with sudo, not as root."
     exit 1
 elif [ "$EUID" -ne 0 ]; then
-    echo "Error: Please run with sudo"
+    echo "Error: Run with sudo."
     exit 1
 fi
 
-# Set up installation directory and user info
+# Setup Ubuntu repository keys
+setup_ubuntu_keys() {
+    local key_path="/usr/share/keyrings/ubuntu-archive-keyring.gpg"
+    sudo mkdir -p /root/.gnupg
+    sudo chmod 700 /root/.gnupg
+
+    if ! command -v dirmngr &>/dev/null; then
+        echo "Installing dirmngr..."
+        sudo apt-get update --allow-unauthenticated
+        sudo apt-get install -y dirmngr
+    fi
+
+    sudo rm -f "$key_path"
+    echo "Downloading Ubuntu archive key..."
+    if ! wget -qO- https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg | sudo gpg --dearmor -o "$key_path"; then
+        echo "Error: Failed to download Ubuntu archive key."
+        exit 1
+    fi
+
+    echo "Updating repository configurations..."
+    sudo sed -i -E "s|^deb http://([^[:space:]]+) ([^[:space:]]+) (.*)$|deb [signed-by=$key_path] http://\1 \2 \3|g" /etc/apt/sources.list
+    sudo sed -i -E "s|^deb-src http://([^[:space:]]+) ([^[:space:]]+) (.*)$|deb-src [signed-by=$key_path] http://\1 \2 \3|g" /etc/apt/sources.list
+    echo "Updating package lists..."
+    sudo apt-get update --allow-insecure-repositories
+}
+
+# Install dependency: gum
+install_dependencies() {
+    if ! command -v gum &>/dev/null; then
+        echo "Installing dependency: gum..."
+        sudo mkdir -p /etc/apt/keyrings
+        if curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg; then
+            echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | \
+                sudo tee /etc/apt/sources.list.d/charm.list
+            sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list.d/charm.list" \
+                -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gum
+        else
+            echo "Error: Failed to add Charm repository key."
+            exit 1
+        fi
+    fi
+}
+
+# Main installation variables
 INSTALL_DIR="/usr/local/share/Setupr"
 USER_HOME=$(eval echo ~${SUDO_USER})
-export USER_HOME
 
-# Set correct environment for sudo user
+# Execute setup functions
+setup_ubuntu_keys
+install_dependencies
+
+# Prepare the user environment
+mkdir -p "${USER_HOME}/Downloads"
+chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/Downloads"
 export HOME="$USER_HOME"
 export USER="$SUDO_USER"
 export LOGNAME="$SUDO_USER"
+export XDG_RUNTIME_DIR="/run/user/$(id -u ${SUDO_USER})"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
 
+# Display logo and notification
 echo -e "$ascii_art"
 echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
-echo -e "\nBegin installation (or abort with ctrl+c)..."
+echo "Begin installation (ctrl+c to abort)..."
 
-# Clone or update repository
+# Clone or update the repository
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
     git clone -b v2.2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
-        echo "Error: Failed to clone repository"
+        echo "Error: Failed to clone repository."
         exit 1
     }
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    # Fetch all updates
-    git fetch origin || {
-        echo "Error: Failed to fetch latest changes"
-        exit 1
-    }
-    # Reset to v2.2 branch
-    git reset --hard origin/v2.2 || {
-        echo "Error: Failed to update repository"
-        exit 1
-    }
+    git fetch origin || { echo "Error: Failed to fetch updates."; exit 1; }
+    git reset --hard origin/v2.2 || { echo "Error: Failed to update repository."; exit 1; }
     cd - >/dev/null
 fi
 
-# Make scripts executable and set permissions
+# Set executable permissions and ownership
 chmod +x "$INSTALL_DIR"/{install,check-version,system-update}.sh
 chmod +x "$INSTALL_DIR"/modules/*/*.sh 2>/dev/null || true
 chown -R "${SUDO_USER}:${SUDO_USER}" "$INSTALL_DIR"
 
-# Ensure proper permissions for user configs
-mkdir -p "${USER_HOME}/Downloads"
-chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/Downloads"
-
-# Source utility functions with correct environment
-sudo -E -u "$SUDO_USER" bash -c "source \"${INSTALL_DIR}/lib/utils.sh\""
-
-# Run system update as root but with correct environment
+# Source utility functions and run system update
+source "${INSTALL_DIR}/lib/utils.sh"
+log_info "Running system update..."
 sudo -E bash "$INSTALL_DIR/system-update.sh"
 
 log_info "Starting Setupr installation..."
-
-# Run install.sh with preserved environment variables
-sudo -E -H -u "$SUDO_USER" bash "$INSTALL_DIR/install.sh"
+# Final command: simply run bash install.sh
+bash "$INSTALL_DIR/install.sh"

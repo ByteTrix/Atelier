@@ -20,15 +20,26 @@ get_package_manager() {
 
 # Function to clean system repositories
 clean_system_repositories() {
-    # Remove problematic repository files
-    sudo rm -f /etc/apt/sources.list.d/*.list
-    sudo rm -f /etc/apt/trusted.gpg.d/*.gpg
-    sudo rm -f /usr/share/keyrings/*.gpg
+    # Backup existing repos
+    sudo mkdir -p /etc/apt/sources.list.d/backup
+    sudo mkdir -p /etc/apt/trusted.gpg.d/backup
+    sudo mkdir -p /usr/share/keyrings/backup
+    
+    # Move existing files to backup
+    sudo mv /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/backup/ 2>/dev/null || true
+    sudo mv /etc/apt/trusted.gpg.d/*.gpg /etc/apt/trusted.gpg.d/backup/ 2>/dev/null || true
+    sudo mv /usr/share/keyrings/*.gpg /usr/share/keyrings/backup/ 2>/dev/null || true
     
     # Update package lists with only main sources
-    sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list" \
+    if ! sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list" \
         -o Dir::Etc::sourceparts="-" \
-        -o APT::Get::List-Cleanup="0"
+        -o APT::Get::List-Cleanup="0"; then
+        log_error "Failed to update package lists, restoring backups..."
+        sudo mv /etc/apt/sources.list.d/backup/*.list /etc/apt/sources.list.d/ 2>/dev/null || true
+        sudo mv /etc/apt/trusted.gpg.d/backup/*.gpg /etc/apt/trusted.gpg.d/ 2>/dev/null || true
+        sudo mv /usr/share/keyrings/backup/*.gpg /usr/share/keyrings/ 2>/dev/null || true
+        return 1
+    fi
 }
 
 # Function to setup repository
@@ -37,18 +48,52 @@ setup_repository() {
     local key_url="$2"
     local repo_url="$3"
     local repo_line="$4"
+    local key_path="/usr/share/keyrings/${name}.gpg"
+    local list_path="/etc/apt/sources.list.d/${name}.list"
     
-    # Download and verify GPG key
-    curl -fsSL "$key_url" | sudo gpg --dearmor -o "/usr/share/keyrings/${name}.gpg"
+    # Create a temporary file for the key
+    local temp_key=$(mktemp)
+    
+    # Download GPG key
+    if ! curl -fsSL "$key_url" -o "$temp_key"; then
+        log_error "Failed to download GPG key from $key_url"
+        rm -f "$temp_key"
+        return 1
+    fi
+    
+    # Verify and import GPG key
+    if ! gpg --quiet --no-default-keyring --keyring "$temp_key" --import "$temp_key" 2>/dev/null; then
+        log_error "Invalid GPG key from $key_url"
+        rm -f "$temp_key"
+        return 1
+    fi
+    
+    # Dearmor and install the key
+    if ! sudo gpg --dearmor -o "$key_path" < "$temp_key"; then
+        log_error "Failed to install GPG key to $key_path"
+        rm -f "$temp_key"
+        return 1
+    fi
+    
+    rm -f "$temp_key"
     
     # Add repository with signed-by option
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/${name}.gpg] $repo_url $repo_line" | \
-        sudo tee "/etc/apt/sources.list.d/${name}.list"
+    if ! echo "deb [arch=amd64 signed-by=$key_path] $repo_url $repo_line" | \
+        sudo tee "$list_path" >/dev/null; then
+        log_error "Failed to add repository to $list_path"
+        return 1
+    fi
     
     # Update only this repository
-    sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list.d/${name}.list" \
+    if ! sudo apt-get update -o Dir::Etc::sourcelist="$list_path" \
         -o Dir::Etc::sourceparts="-" \
-        -o APT::Get::List-Cleanup="0"
+        -o APT::Get::List-Cleanup="0"; then
+        log_error "Failed to update package lists for $name repository"
+        return 1
+    fi
+    
+    log_success "Successfully configured $name repository"
+    return 0
 }
 
 # Function to setup package sources
