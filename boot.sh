@@ -48,6 +48,8 @@ install_dependencies
 # Prepare the user environment
 mkdir -p "${USER_HOME}/Downloads"
 chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/Downloads"
+# Preserve and set essential environment variables
+[ -n "${TERM:-}" ] && export TERM
 export HOME="$USER_HOME"
 export USER="$SUDO_USER"
 export LOGNAME="$SUDO_USER"
@@ -80,8 +82,11 @@ chown -R "${SUDO_USER}:${SUDO_USER}" "$INSTALL_DIR"
 # Source utility functions and run system update
 source "${INSTALL_DIR}/lib/utils.sh"
 log_info "Running system update..."
-sudo -E bash "$INSTALL_DIR/system-update.sh"
+sudo -E TERM="$TERM" bash "$INSTALL_DIR/system-update.sh"
 
 log_info "Starting Setupr installation..."
-# Final command: simply run bash install.sh
-bash "$INSTALL_DIR/install.sh"
+# Preserve TERM for proper terminal handling
+[ -n "${TERM:-}" ] && export TERM
+
+# Final command: run install.sh while preserving TERM
+sudo -E TERM="$TERM" bash "$INSTALL_DIR/install.sh"
