@@ -41,7 +41,7 @@ if [ ! -d "$INSTALL_DIR/.git" ]; then
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    git pull origin upgrage || {
+    git pull origin v2 || {
         echo "Error: Failed to update repository"
         exit 1
     }
