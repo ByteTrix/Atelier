@@ -63,15 +63,20 @@ echo "Begin installation (ctrl+c to abort)..."
 if [ ! -d "$INSTALL_DIR/.git" ]; then
     mkdir -p "$INSTALL_DIR"
     echo "Cloning Setupr..."
-    git clone -b v2.2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
+    git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR" || {
         echo "Error: Failed to clone repository."
         exit 1
     }
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
+    # Get default branch name
+    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@') || \
+    DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5) || \
+    DEFAULT_BRANCH="main"
+
     git fetch origin || { echo "Error: Failed to fetch updates."; exit 1; }
-    git reset --hard origin/v2.2 || { echo "Error: Failed to update repository."; exit 1; }
+    git reset --hard "origin/$DEFAULT_BRANCH" || { echo "Error: Failed to update repository."; exit 1; }
     cd - >/dev/null
 fi
 
