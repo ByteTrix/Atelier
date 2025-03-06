@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Setupr Banner">
+  <img src="https://github.com/ByteTrix/Setupr/blob/v2.2/assets/banner.png?raw=true" alt="Setupr Banner">
 </p>
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
