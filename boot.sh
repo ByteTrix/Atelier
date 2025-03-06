@@ -51,11 +51,15 @@ chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/Downloads"
 # Preserve and set essential environment variables
 [ -n "${TERM:-}" ] && export TERM
 # Export essential environment variables for proper operation
-export HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+
+# Set proper environment variables to run as the real user
+export HOME="$USER_HOME"
 export USER="$SUDO_USER"
 export LOGNAME="$SUDO_USER"
 export XDG_RUNTIME_DIR="/run/user/$(id -u ${SUDO_USER})"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+export SUDO_HOME="$USER_HOME"  # Additional variable for scripts to use
 
 # Create and set permissions for Downloads directory
 mkdir -p "${HOME}/Downloads"
