@@ -26,6 +26,13 @@ clean_system_repositories() {
     # Move existing files to backup
     sudo mv /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/backup/ 2>/dev/null || true
     
+    # Wait for any existing package operations
+    if ! wait_for_apt_locks; then
+        log_error "Package manager is busy and timed out waiting"
+        sudo mv /etc/apt/sources.list.d/backup/*.list /etc/apt/sources.list.d/ 2>/dev/null || true
+        return 1
+    fi
+    
     # Update package lists with only main sources
     if ! sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list" \
         -o Dir::Etc::sourceparts="-" \
@@ -57,6 +64,12 @@ setup_repository() {
         return 1
     fi
     
+    # Wait for any existing package operations
+    if ! wait_for_apt_locks; then
+        log_error "Package manager is busy and timed out waiting"
+        return 1
+    fi
+
     # Update only this repository
     if ! sudo apt-get update -o Dir::Etc::sourcelist="$list_path" \
         -o Dir::Etc::sourceparts="-" \
@@ -125,6 +138,12 @@ install_apt_package() {
     
     while [ $attempt -le $retries ]; do
         log_info "Attempt $attempt of $retries: Installing $pkg"
+        
+        if ! wait_for_apt_locks; then
+            log_error "Package manager is busy and timed out waiting"
+            return 1
+        fi
+        
         if sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"; then
             return 0
         fi

@@ -9,6 +9,12 @@ init_sudo_session
 
 log_info "Starting system update..."
 
+# Wait for any existing package operations to complete
+if ! wait_for_apt_locks; then
+    log_error "Package manager is busy and timed out waiting"
+    exit 1
+fi
+
 # Update package list
 log_info "Updating package lists..."
 if ! sudo_exec apt-get update; then

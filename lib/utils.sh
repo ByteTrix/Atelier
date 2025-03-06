@@ -98,6 +98,33 @@ is_sudo_context() {
     [ -n "${SUDO_USER:-}" ]
 }
 
+# Check for apt/dpkg locks and wait if needed
+# Returns:
+#   0 if locks are cleared, 1 if timeout reached
+wait_for_apt_locks() {
+    local timeout=300  # 5 minutes timeout
+    local start_time=$(date +%s)
+
+    while true; do
+        if ! fuser /var/lib/dpkg/lock >/dev/null 2>&1 && \
+           ! fuser /var/lib/apt/lists/lock >/dev/null 2>&1 && \
+           ! fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; then
+            return 0
+        fi
+
+        local current_time=$(date +%s)
+        local elapsed=$((current_time - start_time))
+        
+        if [ $elapsed -ge $timeout ]; then
+            log_error "Timeout waiting for apt/dpkg locks to be released"
+            return 1
+        fi
+
+        log_warn "Another package manager process is running. Waiting..."
+        sleep 5
+    done
+}
+
 # File management functions
 #######################################
 
