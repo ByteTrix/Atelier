@@ -5,7 +5,7 @@
 > 🚀 Fast, flexible, Set up your entire development workspace in minutes, not hours.
 .
 
-![Setupr Banner](https://raw.githubusercontent.com/ByteTrix/Setupr/v2/.github/assets/banner.png)
+![Setupr Banner](assets/banner.png)
 
 ## 🌟 Why Setupr?
 
