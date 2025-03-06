@@ -4,6 +4,9 @@
 # Author: ByteTrix
 # License: MIT
 
+# Set default terminal type if not set
+[ -z "${TERM:-}" ] && export TERM=xterm-256color
+
 set -euo pipefail
 
 # Color support detection
