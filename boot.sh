@@ -59,27 +59,17 @@ echo -e "$ascii_art"
 echo "=> Setupr is for fresh Ubuntu 24.04+ installations only!"
 echo "Begin installation (ctrl+c to abort)..."
 
-# Clone or update the repository
-if [ ! -d "$INSTALL_DIR/.git" ]; then
-    mkdir -p "$INSTALL_DIR"
-    echo "Cloning Setupr..."
-    if ! git clone https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"; then
-        echo "Error: Failed to clone repository."
-        exit 1
-    fi
-else
-    echo "Updating Setupr..."
-    cd "$INSTALL_DIR"
-    # Update to v2.2 branch
-    if ! git fetch origin; then
-        echo "Error: Failed to fetch updates."
-        exit 1
-    fi
-    if ! git reset --hard origin/v2.2; then
-        echo "Error: Failed to update repository."
-        exit 1
-    fi
-    cd - >/dev/null
+# Remove existing directory if it exists
+if [ -d "$INSTALL_DIR" ]; then
+    rm -rf "$INSTALL_DIR"
+fi
+
+# Clone fresh repository
+mkdir -p "$INSTALL_DIR"
+echo "Cloning Setupr..."
+if ! git clone -b v2.2 https://github.com/ByteTrix/Setupr.git "$INSTALL_DIR"; then
+    echo "Error: Failed to clone repository."
+    exit 1
 fi
 
 # Set executable permissions and ownership
