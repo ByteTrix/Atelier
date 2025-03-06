@@ -70,10 +70,15 @@ if [ ! -d "$INSTALL_DIR/.git" ]; then
 else
     echo "Updating Setupr..."
     cd "$INSTALL_DIR"
-    # Update to default branch
-    git fetch origin || { echo "Error: Failed to fetch updates."; exit 1; }
-    DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | cut -d: -f2 | xargs)
-    git reset --hard "origin/${DEFAULT_BRANCH}" || { echo "Error: Failed to update repository."; exit 1; }
+    # Update to v2.2 branch
+    if ! git fetch origin; then
+        echo "Error: Failed to fetch updates."
+        exit 1
+    fi
+    git reset --hard origin/v2.2 || {
+        echo "Error: Failed to update repository."
+        exit 1
+    }
     cd - >/dev/null
 fi
 
