@@ -6,12 +6,26 @@
 
 set -euo pipefail
 
-# Color definitions for logging
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Color support detection
+setup_colors() {
+    # Only use colors if connected to a terminal
+    if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
+        RED='\033[0;31m'
+        YELLOW='\033[1;33m'
+        GREEN='\033[0;32m'
+        BLUE='\033[0;34m'
+        NC='\033[0m' # No Color
+    else
+        RED=''
+        YELLOW=''
+        GREEN=''
+        BLUE=''
+        NC=''
+    fi
+}
+
+# Initialize colors
+setup_colors
 
 # Logging functions
 #######################################
@@ -20,28 +34,28 @@ NC='\033[0m' # No Color
 # Args:
 #   $1 - Message to log
 log_info() {
-    printf "${BLUE}[INFO]${NC} %s - %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
+    printf "%s[INFO]%s %s - %s\n" "${BLUE}" "${NC}" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
 }
 
 # Log a warning message
 # Args:
 #   $1 - Message to log
 log_warn() {
-    printf "${YELLOW}[WARN]${NC} %s - %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
+    printf "%s[WARN]%s %s - %s\n" "${YELLOW}" "${NC}" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
 }
 
 # Log an error message
 # Args:
 #   $1 - Message to log
 log_error() {
-    printf "${RED}[ERROR]${NC} %s - %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
+    printf "%s[ERROR]%s %s - %s\n" "${RED}" "${NC}" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
 }
 
 # Log a success message
 # Args:
 #   $1 - Message to log
 log_success() {
-    printf "${GREEN}[SUCCESS]${NC} %s - %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
+    printf "%s[SUCCESS]%s %s - %s\n" "${GREEN}" "${NC}" "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
 }
 
 # Sudo management functions
